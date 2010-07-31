@@ -12,6 +12,7 @@ import org.eclipse.core.runtime.jobs.Job
 import org.eclipse.debug.core.DebugPlugin
 import org.eclipse.jdt.core.{ IJavaElement, IMember, IType }
 import org.eclipse.jdt.debug.core.JDIDebugModel
+import org.eclipse.jdt.internal.debug.core.breakpoints.ValidBreakpointLocationLocator
 import org.eclipse.jdt.internal.debug.ui.{ BreakpointUtils, JDIDebugUIPlugin }
 import org.eclipse.jdt.internal.debug.ui.actions.{ ActionMessages, ToggleBreakpointAdapter }
 import org.eclipse.jface.viewers.IStructuredSelection
@@ -24,7 +25,7 @@ import scala.tools.eclipse.util.ReflectionUtils
 class ScalaToggleBreakpointAdapter extends ToggleBreakpointAdapter { self =>
   import ScalaToggleBreakpointAdapterUtils._
   
-  override def toggleLineBreakpoints(part : IWorkbenchPart, selection : ISelection, bestMatch : Boolean) {
+  override def toggleLineBreakpoints(part : IWorkbenchPart, selection : ISelection, bestMatch : Boolean, locator : ValidBreakpointLocationLocator) {
     val job = new Job("Toggle Line Breakpoint") {
       override def run(monitor : IProgressMonitor) : IStatus = {
         val editor = self.getTextEditor(part)
@@ -103,7 +104,7 @@ class ScalaToggleBreakpointAdapter extends ToggleBreakpointAdapter { self =>
       else if(member.getElementType == IJavaElement.TYPE)
         toggleClassBreakpoints(part, sel)
       else
-        toggleLineBreakpoints(part, selection, true)
+        toggleLineBreakpoints(part, selection, true, null)
     }
   }
 

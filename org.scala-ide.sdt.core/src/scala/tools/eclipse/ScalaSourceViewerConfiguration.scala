@@ -151,10 +151,12 @@ class ScalaSourceViewerConfiguration(store : IPreferenceStore, editor : ITextEdi
 
 object ScalaSourceViewerConfigurationUtils extends ReflectionUtils {
   val bestMatchHoverClazz = classOf[BestMatchHover]
-  val addTextHoverMethod = getDeclaredMethod(bestMatchHoverClazz, "addTextHover", classOf[ITextHover])
+  //val addTextHoverMethod = getDeclaredMethod(bestMatchHoverClazz, "addTextHover", classOf[ITextHover])
+  val bestMatchHoverField = getDeclaredField(bestMatchHoverClazz, "fBestHover")
   val hyperlinkDetectorDelegateClazz = Class.forName("org.eclipse.ui.texteditor.HyperlinkDetectorRegistry$HyperlinkDetectorDelegate")
   val hyperlinkDescriptorField = getDeclaredField(hyperlinkDetectorDelegateClazz, "fHyperlinkDescriptor")
 
-  def addTextHover(bmh : BestMatchHover, hover : ITextHover) = addTextHoverMethod.invoke(bmh, hover)
+  //def addTextHover(bmh : BestMatchHover, hover : ITextHover) = addTextHoverMethod.invoke(bmh, hover)
+  def addTextHover(bmh: BestMatchHover, hover: ITextHover) = bestMatchHoverField.set(bmh, hover)
   def getHyperlinkDescriptor(hdd : IHyperlinkDetector) = hyperlinkDescriptorField.get(hdd).asInstanceOf[HyperlinkDetectorDescriptor]
 }

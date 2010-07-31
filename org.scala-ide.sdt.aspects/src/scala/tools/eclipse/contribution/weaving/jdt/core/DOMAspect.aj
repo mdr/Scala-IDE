@@ -131,6 +131,7 @@ public privileged aspect DOMAspect {
           unit.scope,
           DefaultWorkingCopyOwner.PRIMARY,
           new org.eclipse.jdt.core.dom.DefaultBindingResolver.BindingTables(),
+          true,
           true);
       ast.setBindingResolver(resolver);
       converter.setAST(ast);
