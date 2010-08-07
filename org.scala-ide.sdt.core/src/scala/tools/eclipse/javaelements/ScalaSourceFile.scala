@@ -19,8 +19,6 @@ import org.eclipse.swt.widgets.Display
 import scala.tools.nsc.io.{ AbstractFile, VirtualFile }
 import scala.tools.nsc.util.BatchSourceFile
 
-import scala.tools.eclipse.contribution.weaving.jdt.IScalaSourceFile
-
 import scala.tools.eclipse.util.EclipseFile
 
 object ScalaSourceFile {
@@ -38,7 +36,8 @@ object ScalaSourceFile {
 }
 
 class ScalaSourceFile(fragment : PackageFragment, elementName: String, workingCopyOwner : WorkingCopyOwner) 
-  extends JDTCompilationUnit(fragment, elementName, workingCopyOwner) with ScalaCompilationUnit with IScalaSourceFile {
+  extends JDTCompilationUnit(fragment, elementName, workingCopyOwner) with ScalaCompilationUnit 
+  with scala.tools.eclipse.contribution.weaving.jdt.IScalaSourceFile {
 
   override def getMainTypeName : Array[Char] =
     getElementName.substring(0, getElementName.length - ".scala".length).toCharArray()

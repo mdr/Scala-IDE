@@ -25,12 +25,10 @@ import org.eclipse.jdt.internal.ui.javaeditor.DocumentAdapter
 import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.util.{ BatchSourceFile, SourceFile }
 
-import scala.tools.eclipse.contribution.weaving.jdt.{ IScalaCompilationUnit, IScalaWordFinder }
-
 import scala.tools.eclipse.{ ScalaImages, ScalaPlugin, ScalaPresentationCompiler, ScalaSourceIndexer, ScalaWordFinder }
 import scala.tools.eclipse.util.ReflectionUtils
 
-trait ScalaCompilationUnit extends Openable with env.ICompilationUnit with ScalaElement with IScalaCompilationUnit with IBufferChangedListener {
+trait ScalaCompilationUnit extends Openable with env.ICompilationUnit with ScalaElement with scala.tools.eclipse.contribution.weaving.jdt.IScalaCompilationUnit with IBufferChangedListener {
   val project = ScalaPlugin.plugin.getScalaProject(getJavaProject.getProject)
 
   def file : AbstractFile
@@ -195,7 +193,7 @@ trait ScalaCompilationUnit extends Openable with env.ICompilationUnit with Scala
     }
   }
   
-  override def getScalaWordFinder() : IScalaWordFinder = ScalaWordFinder
+  override def getScalaWordFinder() : scala.tools.eclipse.contribution.weaving.jdt.IScalaWordFinder = ScalaWordFinder
 }
 
 object OpenableUtils extends ReflectionUtils {

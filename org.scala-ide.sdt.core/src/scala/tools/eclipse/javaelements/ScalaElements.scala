@@ -20,11 +20,9 @@ import org.eclipse.jface.resource.ImageDescriptor
 import org.eclipse.swt.graphics.Image
 
 import scala.tools.eclipse.ScalaImages
-import scala.tools.eclipse.contribution.weaving.jdt.IScalaElement
-import scala.tools.eclipse.contribution.weaving.jdt.ui.IMethodOverrideInfo
 import scala.tools.eclipse.util.ReflectionUtils
 
-trait ScalaElement extends JavaElement with IScalaElement {
+trait ScalaElement extends JavaElement with scala.tools.eclipse.contribution.weaving.jdt.IScalaElement {
   def getElementInfo : AnyRef
   def getElementName : String
   def scalaName : String = getElementName
@@ -101,7 +99,7 @@ class ScalaModuleElement(parent : JavaElement, name : String, synthetic : Boolea
 }
 
 class ScalaDefElement(parent : JavaElement, name: String, paramTypes : Array[String], synthetic : Boolean, display : String)
-  extends SourceMethod(parent, name, paramTypes) with ScalaElement with IMethodOverrideInfo {
+  extends SourceMethod(parent, name, paramTypes) with ScalaElement with scala.tools.eclipse.contribution.weaving.jdt.ui.IMethodOverrideInfo {
   override def getLabelText(flags : Long) = display
   override def isVisible = !synthetic && !getElementInfo.isInstanceOf[ScalaSourceConstructorInfo]
 }

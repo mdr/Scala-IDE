@@ -7,9 +7,8 @@ package scala.tools.eclipse.javaelements
 
 import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal
 
-import scala.tools.eclipse.contribution.weaving.jdt.IScalaCompletionProposal
-
 class ScalaCompletionProposal(kind : Int, completionLocation : Int)
-  extends InternalCompletionProposal(kind, completionLocation) with IScalaCompletionProposal {
+  extends InternalCompletionProposal(kind, completionLocation) 
+  with scala.tools.eclipse.contribution.weaving.jdt.IScalaCompletionProposal {
   var suppressArgList = false
 }

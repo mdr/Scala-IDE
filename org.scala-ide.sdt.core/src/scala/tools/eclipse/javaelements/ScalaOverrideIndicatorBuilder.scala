@@ -11,8 +11,6 @@ import org.eclipse.jdt.ui.JavaUI
 import org.eclipse.jface.text.{ Position => JFacePosition }
 import org.eclipse.jface.text.source.Annotation
 
-import scala.tools.eclipse.contribution.weaving.jdt.IScalaOverrideIndicator
-
 import scala.tools.eclipse.ScalaPresentationCompiler
 
 trait ScalaOverrideIndicatorBuilder { self : ScalaPresentationCompiler =>
@@ -71,7 +69,7 @@ object ScalaOverrideIndicatorBuilder {
     methodTypeSignatures : List[String],
     text : String,
     isDeferred : Boolean
-  ) extends Annotation(ANNOTATION_TYPE, false, text) with IScalaOverrideIndicator {
+  ) extends Annotation(ANNOTATION_TYPE, false, text) with scala.tools.eclipse.contribution.weaving.jdt.IScalaOverrideIndicator {
   
     override def isOverwriteIndicator : Boolean = isDeferred
   

@@ -141,10 +141,10 @@ class ScalaSourceViewerConfiguration(store : IPreferenceStore, editor : ITextEdi
   }
 
   override def getContentFormatter(sourceViewer: ISourceViewer) = {
-	val contentFormatter = new ContentFormatter
+        val contentFormatter = new ContentFormatter
     contentFormatter.enablePartitionAwareFormatting( false );
     contentFormatter.setFormattingStrategy(new ScalaFormattingStrategy(sourceViewer), IDocument.DEFAULT_CONTENT_TYPE)
-	contentFormatter
+        contentFormatter
   }
 
 }

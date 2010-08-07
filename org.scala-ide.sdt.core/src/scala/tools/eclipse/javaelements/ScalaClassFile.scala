@@ -25,10 +25,9 @@ import org.eclipse.jdt.core.dom.CompilationUnit
 import scala.tools.nsc.io.{ AbstractFile, VirtualFile }
 
 import scala.tools.eclipse.ScalaImages
-import scala.tools.eclipse.contribution.weaving.jdt.IScalaClassFile
 
 class ScalaClassFile(parent : PackageFragment, name : String, sourceFile : String)
-  extends ClassFile(parent, name) with ScalaCompilationUnit with IScalaClassFile {
+  extends ClassFile(parent, name) with ScalaCompilationUnit with scala.tools.eclipse.contribution.weaving.jdt.IScalaClassFile {
   override def getImageDescriptor = ScalaImages.SCALA_CLASS_FILE
 
   override def getElementAt(position : Int) : IJavaElement = {
