@@ -149,8 +149,7 @@ class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
  	//
 	val presenter = new SemanticHighlightingPresenter(this,getSourceViewer())
 	getSourceViewer().getDocument().addDocumentListener(presenter)
-//	getSourceViewer().addTextInputListener(presenter)
-//	getSourceViewer().asInstanceOf[org.eclipse.jface.text.TextViewer].addTextPresentationListener(presenter)
+	presenter.update()
   }
 
 }
