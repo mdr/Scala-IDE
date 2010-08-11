@@ -94,7 +94,7 @@
       <id>ajdt-helios</id>
       <name>AJDT for Eclipse Helios p2 repository</name>
       <layout>p2</layout>
-      <url>http://download.eclipse.org/tools/ajdt/36/update</url>
+      <url>http://download.eclipse.org/tools/ajdt/36/dev/update</url>
       <snapshots><enabled>false</enabled></snapshots>
     </repository>
     <repository>
