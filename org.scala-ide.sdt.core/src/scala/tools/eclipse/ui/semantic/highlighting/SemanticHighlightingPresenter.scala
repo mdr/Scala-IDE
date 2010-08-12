@@ -33,7 +33,7 @@ import scala.collection._
 class SemanticHighlightingPresenter(fEditor: CompilationUnitEditor, fSourceViewer: ISourceViewer)
   extends IDocumentListener {
 
-  var currentAnnotations: List[Annotation] = List()
+  import SemanticHighlightingPresenter._
 
   val annotationAccess = new IAnnotationAccess() {
     def getType(annotation: Annotation) = annotation.getType();
@@ -92,22 +92,24 @@ class SemanticHighlightingPresenter(fEditor: CompilationUnitEditor, fSourceViewe
       object viewsCollector extends compiler.Traverser {
         override def traverse(t: compiler.Tree): Unit = t match {
           case v: compiler.ApplyImplicitView =>
-            val ia = new ImplicitConversionsOrArgsAnnotation(ImplicitConversionsOrArgsAnnotation.KIND,
+            val txt = fSourceViewer.getDocument().get(v.pos.start, v.pos.end - v.pos.start)
+            val ia = new ImplicitConversionsOrArgsAnnotation(cu,ImplicitConversionsOrArgsAnnotation.KIND,
               false,
-              v.fun.toString)
+              "Implicit conversions found: "+txt+" => "+v.fun.symbol.name+"("+txt+")")
             val pos = new org.eclipse.jface.text.Position(v.pos.start, v.pos.end - v.pos.start);
             toAdds.put(ia, pos)
             toAddAnnotations = ia :: toAddAnnotations
-            println(v)
             super.traverse(t)
           case v: compiler.ApplyToImplicitArgs =>
-            val ia = new ImplicitConversionsOrArgsAnnotation(ImplicitConversionsOrArgsAnnotation.KIND,
+            val txt = fSourceViewer.getDocument().get(v.pos.start, v.pos.end - v.pos.start)
+            val sb = new StringBuilder()
+            for (arg <- v.args) sb.append(arg.symbol.name).append(",")
+            val ia = new ImplicitConversionsOrArgsAnnotation(cu,ImplicitConversionsOrArgsAnnotation.KIND,
               false,
-              v.fun.toString)
+              "Implicit arguments found: "+txt+" => "+txt+"("+sb.deleteCharAt(sb.length()-1).toString()+")")
             val pos = new org.eclipse.jface.text.Position(v.pos.start, v.pos.end - v.pos.start);
             toAdds.put(ia, pos)
             toAddAnnotations = ia :: toAddAnnotations
-            println(v)
             super.traverse(t)
           case _ =>
             super.traverse(t)
@@ -125,4 +127,9 @@ class SemanticHighlightingPresenter(fEditor: CompilationUnitEditor, fSourceViewe
     scala.tools.eclipse.ScalaPlugin.plugin.getPreferenceStore()
   }
 
+}
+
+object SemanticHighlightingPresenter {
+	//XXX: workaround for current cache related bugs, like bug#1000103 
+	var currentAnnotations: List[Annotation] = List()
 }

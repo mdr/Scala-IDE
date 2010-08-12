@@ -854,4 +854,12 @@
       <partition type="__dftl_partition_content_type"/>
    </javaCompletionProposalComputer>
  </extension>
+ <extension
+       point="org.eclipse.jdt.ui.quickAssistProcessors">
+    <quickAssistProcessor
+          class="scala.tools.eclipse.quickfix.ScalaQuickAssistProcessor"
+          id="org.scala-ide.sdt.core.quickAssistProcessor"
+          name="Scala Quick Assist Processor">
+    </quickAssistProcessor>
+ </extension>
 </plugin>
