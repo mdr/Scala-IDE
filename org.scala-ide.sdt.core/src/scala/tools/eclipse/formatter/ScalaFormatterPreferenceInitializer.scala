@@ -20,6 +20,5 @@ class ScalaFormatterPreferenceInitializer extends AbstractPreferenceInitializer 
         case prefType@IntegerPreference(_, _) =>
           preferenceStore.setDefault(key, prefType.cast(preference).defaultValue)
       }
-
     }
 }

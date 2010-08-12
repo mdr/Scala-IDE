@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2005-2010 LAMP/EPFL
  */
@@ -21,8 +22,10 @@ import org.eclipse.jdt.ui.actions.IJavaEditorActionDefinitionIds
 import org.eclipse.jdt.ui.text.JavaSourceViewerConfiguration
 import org.eclipse.jface.preference.IPreferenceStore
 import org.eclipse.jface.text._
-import org.eclipse.jface.text.source.{ Annotation, IAnnotationModelExtension, SourceViewerConfiguration }
+import org.eclipse.jface.text.source._
 import org.eclipse.jface.viewers.ISelection
+import org.eclipse.swt.graphics.Color
+import org.eclipse.swt.custom.StyleRange
 import org.eclipse.ui.{ IWorkbenchPart, ISelectionListener, IFileEditorInput }
 import org.eclipse.ui.editors.text.{ ForwardingDocumentProvider, TextFileDocumentProvider }
 import org.eclipse.ui.texteditor.{ IAbstractTextEditorHelpContextIds, ITextEditorActionConstants, IWorkbenchActionDefinitionIds, TextOperationAction }
@@ -138,7 +141,7 @@ class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
     super.createPartControl(parent)
     val viewer = getSourceViewer()
     if (viewer ne null) {
-      
+
       //FIXME : workaround for my limited knowledge about current presentation compiler
       val scu = JavaPlugin.getDefault().getWorkingCopyManager().getWorkingCopy(getEditorInput()).asInstanceOf[ScalaCompilationUnit]
       viewer.getDocument().addPrenotifiedDocumentListener(ScalaTypeAutoCompletionProposalManager.getProposalFor(scu))
@@ -155,16 +158,48 @@ class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
   // override to public scope (from protected)
   override def getElementAt(offset: Int, reconcile: Boolean) = super.getElementAt(offset, reconcile)
 
-  private val preferenceListener = new IPropertyChangeListener() {
-    def propertyChange(event: PropertyChangeEvent) {
-      handlePreferenceStoreChanged(event)
+ override def reconciled(ast: CompilationUnit, forced: Boolean, progressMonitor: IProgressMonitor) {
+    super.reconciled(ast, forced, progressMonitor)
+
+    val scalaSourceFile = getEditorInput.asInstanceOf[IAdaptable].getAdapter(classOf[IJavaElement]).asInstanceOf[ScalaSourceFile]
+    scalaSourceFile.doWithSourceFile { (sourceFile, compiler) =>
+      val symbolInfos = new SymbolClassifier(sourceFile, compiler).classifySymbols
+      getSite.getShell.getDisplay.asyncExec(new Runnable() {
+        def run() = symbolStyler.updateSymbolAnnotations(symbolInfos, getSourceViewer)
+      })
     }
   }
-  ScalaPlugin.plugin.getPreferenceStore.addPropertyChangeListener(preferenceListener)
 
-  override def dispose() {
-    super.dispose()
-    ScalaPlugin.plugin.getPreferenceStore.removePropertyChangeListener(preferenceListener)
+  private val symbolStyler = new SymbolStyler
+
+  override def configureSourceViewerDecorationSupport(support: SourceViewerDecorationSupport) {
+    super.configureSourceViewerDecorationSupport(support)
+    for (symbolAnnotationInfo <- SymbolAnnotations.allSymbolAnnotations.values)
+      support.setAnnotationPreference(symbolAnnotationInfo.annotationPreference)
+  }
+
+  override protected def getSourceViewerDecorationSupport(viewer: ISourceViewer): SourceViewerDecorationSupport = {
+    if (fSourceViewerDecorationSupport == null) {
+      fSourceViewerDecorationSupport = new ScalaSourceViewerDecorationSupport(viewer)
+      configureSourceViewerDecorationSupport(fSourceViewerDecorationSupport)
+    }
+    fSourceViewerDecorationSupport
+  }
+
+  class ScalaSourceViewerDecorationSupport(viewer: ISourceViewer) extends SourceViewerDecorationSupport(viewer, getOverviewRuler(), getAnnotationAccess(), getSharedColors()) {
+
+    override protected def createAnnotationPainter(): AnnotationPainter = {
+      val annotationPainter = super.createAnnotationPainter()
+      annotationPainter.addTextStyleStrategy(SymbolAnnotations.FOREGROUND_COLOUR_STYLE, new ForegroundColourTextStyleStrategy)
+      annotationPainter
+    }
+
+  }
+
+  class ForegroundColourTextStyleStrategy extends AnnotationPainter.ITextStyleStrategy {
+
+    def applyTextStyle(styleRange: StyleRange, annotationColor: Color) { styleRange.foreground = annotationColor }
+
   }
 
 }
