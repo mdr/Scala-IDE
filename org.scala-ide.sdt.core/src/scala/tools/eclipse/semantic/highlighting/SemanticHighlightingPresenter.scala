@@ -4,6 +4,9 @@
 package scala.tools.eclipse
 package semantic.highlighting
 
+import org.eclipse.swt.widgets.Display
+import scala.tools.eclipse.semantichighlighting._
+import org.eclipse.ui.texteditor.SourceViewerDecorationSupport
 import org.eclipse.core.runtime.IPath
 import reconciliation.ReconciliationParticipant
 import org.eclipse.core.runtime.IProgressMonitor
@@ -19,6 +22,8 @@ import org.eclipse.ui.{ PlatformUI, IPartListener, IWorkbenchPart }
 import org.eclipse.ui.part.FileEditorInput
 import scala.collection._
 import scala.tools.eclipse.javaelements.ScalaCompilationUnit
+import scala.tools.eclipse.ui.preferences.PropertyChangeListenerProxy
+import scala.tools.eclipse.util.{ ColorManager, Annotations, AnnotationsTypes }
 
 /**
  * This class is instantiated by the reconciliationParticipants extension point and
@@ -29,6 +34,7 @@ class SemanticHighlightingReconciliationParticipant extends ReconciliationPartic
   override def afterReconciliation(scu: ScalaCompilationUnit, monitor: IProgressMonitor, workingCopyOwner: WorkingCopyOwner) {
     SemanticHighlightingReconciliation.afterReconciliation(scu, monitor, workingCopyOwner)
   }
+
 }
 
 /**
@@ -45,6 +51,8 @@ object SemanticHighlightingReconciliation {
 
   // TODO use an actor to manage "Thread Safely" the map
   private val participants = new collection.mutable.HashMap[ScalaCompilationUnit, SemanticHighlightingPresenter]
+
+  private val symbolStylers = new collection.mutable.HashMap[ScalaCompilationUnit, SymbolStyler]
 
   /**
    *  A listener that removes a  SemanticHighlightingPresenter when the part is closed.
@@ -83,7 +91,7 @@ object SemanticHighlightingReconciliation {
 
             page.addPartListener(new UnregisteringPartListener(scu))
 
-            new SemanticHighlightingPresenter(editorInput, editor.sourceViewer)
+            (new SemanticHighlightingPresenter(editorInput, editor.sourceViewer), new SymbolStyler(editor.sourceViewer))
         }
     }
   }
@@ -93,10 +101,20 @@ object SemanticHighlightingReconciliation {
     val firstTimeReconciliation = !participants.contains(scu)
 
     if (firstTimeReconciliation) {
-      createSemantigHighlighterForEditor(scu) foreach (participants(scu) = _)
+      createSemanticHighlighterForEditor(scu) foreach {
+        case (presenter, styler) =>
+          participants(scu) = presenter
+          symbolStylers(scu) = styler
+      }
+
     }
 
     participants(scu).update(scu)
+
+    scu.doWithSourceFile { (sourceFile, compiler) =>
+      val symbolInfos = new SymbolClassifier(sourceFile, compiler).classifySymbols
+      symbolStylers(scu).updateSymbolAnnotations(symbolInfos)
+    }
   }
 }
 

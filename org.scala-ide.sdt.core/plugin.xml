@@ -699,6 +699,9 @@
      <initializer
            class="scala.tools.eclipse.properties.ImplicitsPagePreferenceInitializer">
      </initializer>
+     <initializer
+           class="scala.tools.eclipse.semantichighlighting.ScalaHighlightingPreferenceInitializer">
+     </initializer>
   </extension>
 
   <extension point="org.eclipse.core.expressions.propertyTesters">

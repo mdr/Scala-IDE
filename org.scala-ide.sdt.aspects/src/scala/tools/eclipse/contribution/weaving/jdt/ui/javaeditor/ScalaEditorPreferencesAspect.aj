@@ -16,6 +16,6 @@ public privileged aspect ScalaEditorPreferencesAspect {
   boolean around(IScalaEditor editor) :
     isSemanticHighlightingEnabled() && target(editor) {
     // Disable Java semantic highlighting for Scala source
-    return false;
+    return true;
   }
 }

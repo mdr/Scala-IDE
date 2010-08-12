@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2005-2010 LAMP/EPFL
  */
@@ -18,8 +19,10 @@ import org.eclipse.jdt.ui.actions.IJavaEditorActionDefinitionIds
 import org.eclipse.jdt.ui.text.JavaSourceViewerConfiguration
 import org.eclipse.jface.preference.IPreferenceStore
 import org.eclipse.jface.text._
-import org.eclipse.jface.text.source.{ Annotation, IAnnotationModelExtension, SourceViewerConfiguration }
+import org.eclipse.jface.text.source._
 import org.eclipse.jface.viewers.ISelection
+import org.eclipse.swt.graphics.Color
+import org.eclipse.swt.custom.StyleRange
 import org.eclipse.ui.{ IWorkbenchPart, ISelectionListener, IFileEditorInput }
 import org.eclipse.ui.editors.text.{ ForwardingDocumentProvider, TextFileDocumentProvider }
 import org.eclipse.ui.texteditor.{ IAbstractTextEditorHelpContextIds, ITextEditorActionConstants, IWorkbenchActionDefinitionIds, TextOperationAction }
@@ -31,6 +34,8 @@ import org.eclipse.jface.action.Action
 import org.eclipse.jface.action.MenuManager
 import org.eclipse.jface.action.IContributionItem
 import org.eclipse.jface.action.Separator
+
+import scala.tools.eclipse.semantichighlighting._
 
 class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
 
@@ -196,8 +201,9 @@ class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
     def propertyChange(event: PropertyChangeEvent) {
       handlePreferenceStoreChanged(event)
     }
+
+    refactoring.RefactoringMenu.fillQuickMenu(this)
   }
-  ScalaPlugin.plugin.getPreferenceStore.addPropertyChangeListener(preferenceListener)
 
   override def dispose() {
     super.dispose()
@@ -250,6 +256,38 @@ class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
     super.createPartControl(parent)
     refactoring.RefactoringMenu.fillQuickMenu(this)
   }
+
+
+  override def configureSourceViewerDecorationSupport(support: SourceViewerDecorationSupport) {
+    super.configureSourceViewerDecorationSupport(support)
+    for (symbolAnnotationInfo <- SymbolAnnotations.allSymbolAnnotations.values)
+      support.setAnnotationPreference(symbolAnnotationInfo.annotationPreference)
+  }
+
+  override protected def getSourceViewerDecorationSupport(viewer: ISourceViewer): SourceViewerDecorationSupport = {
+    if (fSourceViewerDecorationSupport == null) {
+      fSourceViewerDecorationSupport = new ScalaSourceViewerDecorationSupport(viewer)
+      configureSourceViewerDecorationSupport(fSourceViewerDecorationSupport)
+    }
+    fSourceViewerDecorationSupport
+  }
+
+  class ScalaSourceViewerDecorationSupport(viewer: ISourceViewer) extends SourceViewerDecorationSupport(viewer, getOverviewRuler(), getAnnotationAccess(), getSharedColors()) {
+
+    override protected def createAnnotationPainter(): AnnotationPainter = {
+      val annotationPainter = super.createAnnotationPainter()
+      annotationPainter.addTextStyleStrategy(SymbolAnnotations.FOREGROUND_COLOUR_STYLE, new ForegroundColourTextStyleStrategy)
+      annotationPainter
+    }
+
+  }
+
+  class ForegroundColourTextStyleStrategy extends AnnotationPainter.ITextStyleStrategy {
+
+    def applyTextStyle(styleRange: StyleRange, annotationColor: Color) { styleRange.foreground = annotationColor }
+
+  }
+
 }
 
 object ScalaSourceFileEditor {
