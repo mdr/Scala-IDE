@@ -41,7 +41,7 @@ object ImplicitConversionsOrArgsAnnotation {
 }
 
 
-class ImplicitConversionsOrArgsDrawingStrategy(fUnderlineStyle: Int, fFontStyle: Int) extends AnnotationPainter.ITextStyleStrategy {
+class ImplicitConversionsOrArgsTextStyleStrategy(var fUnderlineStyle: Int, var fFontStyle: Int) extends AnnotationPainter.ITextStyleStrategy {
 	
     def applyTextStyle(styleRange: StyleRange, annotationColor: Color) {
     	    styleRange.fontStyle = fFontStyle
@@ -53,5 +53,13 @@ class ImplicitConversionsOrArgsDrawingStrategy(fUnderlineStyle: Int, fFontStyle:
 			styleRange.underlineStyle= fUnderlineStyle 
 			styleRange.underlineColor= annotationColor 
 	}
+    
+    def setUnderlineStyle(fus: Int) {
+    	fUnderlineStyle = fus
+    }
 	
+    def setFontStyle(ffs: Int) {
+    	fFontStyle = ffs
+    }
+    
 }

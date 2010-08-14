@@ -18,6 +18,9 @@ import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.jface.text.TextPresentation;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.{ IAnnotationAccess, AnnotationPainter, IAnnotationModelExtension };
+import org.eclipse.jface.util.IPropertyChangeListener
+import org.eclipse.jface.util.PropertyChangeEvent
+
 import org.eclipse.swt.SWT
 
 import scala.tools.eclipse.javaelements.ScalaCompilationUnit;
@@ -31,7 +34,7 @@ import scala.collection._
  *
  */
 class SemanticHighlightingPresenter(fEditor: CompilationUnitEditor, fSourceViewer: ISourceViewer)
-  extends IDocumentListener {
+  extends IDocumentListener with IPropertyChangeListener {
 
   import SemanticHighlightingPresenter._
 
@@ -42,29 +45,55 @@ class SemanticHighlightingPresenter(fEditor: CompilationUnitEditor, fSourceViewe
   };
   val painter = new AnnotationPainter(fSourceViewer, annotationAccess);
   import scala.tools.eclipse.ui.preferences.ScalaEditorColoringPreferencePage._
-  val fUnderlineStyle = getPreferenceStore().getInt(P_UNDERLINE) match {
+  var fUnderlineStyle = getPreferenceStore().getInt(P_UNDERLINE) match {
     case 1 => SWT.UNDERLINE_SQUIGGLE
     case 2 => SWT.UNDERLINE_DOUBLE
     case 3 => SWT.UNDERLINE_SINGLE
     case 4 => 8 // for no underline case
   }
-  val fFontStyle1 = getPreferenceStore().getBoolean(P_BLOD) match {
+  var fFontStyle_BLOD = getPreferenceStore().getBoolean(P_BLOD) match {
     case true => SWT.BOLD
     case _ => SWT.NORMAL
   }
-  val fFontStyle2 = getPreferenceStore().getBoolean(P_ITALIC) match {
+  var fFontStyle_ITALIC = getPreferenceStore().getBoolean(P_ITALIC) match {
     case true => SWT.ITALIC
     case _ => SWT.NORMAL
   }
-  val fColorValue = PreferenceConverter.getColor(getPreferenceStore(), P_COLOR)
+  var fColorValue = PreferenceConverter.getColor(getPreferenceStore(), P_COLOR)
+  
+  val impTextStyleStrategy = new ImplicitConversionsOrArgsTextStyleStrategy(fUnderlineStyle, fFontStyle_BLOD | fFontStyle_ITALIC);
+  
+  
   painter.addTextStyleStrategy(ImplicitConversionsOrArgsAnnotation.KIND,
-    new ImplicitConversionsOrArgsDrawingStrategy(fUnderlineStyle, fFontStyle1 | fFontStyle2));
+    impTextStyleStrategy);
   painter.addAnnotationType(ImplicitConversionsOrArgsAnnotation.KIND, ImplicitConversionsOrArgsAnnotation.KIND);
   painter.setAnnotationTypeColor(ImplicitConversionsOrArgsAnnotation.KIND,
     ColorManager.getDefault.getColor(fColorValue))
   fSourceViewer.asInstanceOf[org.eclipse.jface.text.TextViewer].addPainter(painter);
   fSourceViewer.asInstanceOf[org.eclipse.jface.text.TextViewer].addTextPresentationListener(painter);
 
+  
+  override def propertyChange(event: PropertyChangeEvent){
+	  event.getProperty()  match {
+	 	  case P_BLOD => fFontStyle_BLOD =  event.getNewValue().asInstanceOf[Boolean] 
+	 	                                      match { case true => SWT.BOLD;case _ => SWT.NORMAL }
+	 	  case P_ITALIC => fFontStyle_ITALIC = event.getNewValue().asInstanceOf[Boolean] 
+	 	                                      match { case true => SWT.ITALIC;case _ => SWT.NORMAL}
+	 	  case P_COLOR => fColorValue = event.getNewValue().asInstanceOf[org.eclipse.swt.graphics.RGB]
+	 	  case P_UNDERLINE => fUnderlineStyle = event.getNewValue().asInstanceOf[String] 
+	 	                                      match { case "1" => SWT.UNDERLINE_SQUIGGLE
+	 	 	                                          case "2" => SWT.UNDERLINE_DOUBLE
+	 	 	                                          case "3" => SWT.UNDERLINE_SINGLE
+	 	 	                                          case "4" => 8}
+	  }
+	  impTextStyleStrategy.setUnderlineStyle(fUnderlineStyle)
+	  impTextStyleStrategy.setFontStyle(fFontStyle_BLOD | fFontStyle_ITALIC)
+	  painter.setAnnotationTypeColor(ImplicitConversionsOrArgsAnnotation.KIND, 
+	 	ColorManager.getDefault.getColor(fColorValue))
+	  update()
+  }
+  
+  
   /**
    * The manipulation described by the document event will be performed.
    *
