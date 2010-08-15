@@ -121,7 +121,7 @@ class SemanticHighlightingPresenter(fEditor: CompilationUnitEditor, fSourceViewe
       object viewsCollector extends compiler.Traverser {
         override def traverse(t: compiler.Tree): Unit = t match {
           case v: compiler.ApplyImplicitView =>
-            val txt = fSourceViewer.getDocument().get(v.pos.start, v.pos.end - v.pos.start)
+            val txt = fSourceViewer.getDocument().get(v.pos.start, v.pos.end - v.pos.start).trim()
             val ia = new ImplicitConversionsOrArgsAnnotation(cu,ImplicitConversionsOrArgsAnnotation.KIND,
               false,
               "Implicit conversions found: "+txt+" => "+v.fun.symbol.name+"("+txt+")")
@@ -130,7 +130,7 @@ class SemanticHighlightingPresenter(fEditor: CompilationUnitEditor, fSourceViewe
             toAddAnnotations = ia :: toAddAnnotations
             super.traverse(t)
           case v: compiler.ApplyToImplicitArgs =>
-            val txt = fSourceViewer.getDocument().get(v.pos.start, v.pos.end - v.pos.start)
+            val txt = fSourceViewer.getDocument().get(v.pos.start, v.pos.end - v.pos.start).trim()
             val sb = new StringBuilder()
             for (arg <- v.args) sb.append(arg.symbol.name).append(",")
             val ia = new ImplicitConversionsOrArgsAnnotation(cu,ImplicitConversionsOrArgsAnnotation.KIND,

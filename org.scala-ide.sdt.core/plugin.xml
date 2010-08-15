@@ -845,14 +845,24 @@
     </include>
   </extension>
   
- <extension point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
-   id="scala.tools.eclipse.TemplateCompletionProposalComputer"
-   name="Template Completion Proposal Computer">
-   <javaCompletionProposalComputer
-      class="scala.tools.eclipse.templates.TemplateCompletionProposalComputer"
-      categoryId="org.eclipse.jdt.ui.templateProposalCategory">
-      <partition type="__dftl_partition_content_type"/>
-   </javaCompletionProposalComputer>
+ <extension
+       id="scala.tools.eclipse.TemplateCompletionProposalComputer"
+       name="Template Completion Proposal Computer"
+       point="org.eclipse.jdt.ui.javaCompletionProposalComputer">
+    <javaCompletionProposalComputer
+          categoryId="org.eclipse.jdt.ui.templateProposalCategory"
+          class="scala.tools.eclipse.templates.TemplateCompletionProposalComputer">
+       <partition
+             type="__dftl_partition_content_type">
+       </partition>
+    </javaCompletionProposalComputer>
+ </extension>
+ <extension
+       id="scalaProposalCategory"
+       name="Scala Proposals"
+       point="org.eclipse.jdt.ui.javaCompletionProposalComputer">
+    <proposalCategory
+          icon="icons/full/elcl16/scalaassist_co.gif"></proposalCategory>
  </extension>
  <extension
        point="org.eclipse.jdt.ui.quickAssistProcessors">
@@ -861,5 +871,13 @@
           id="org.scala-ide.sdt.core.quickAssistProcessor"
           name="Scala Quick Assist Processor">
     </quickAssistProcessor>
+ </extension>
+ <extension
+       id="ScalaCompletionProposalComputer_no"
+       point="org.eclipse.jdt.ui.javaCompletionProposalComputer">
+    <javaCompletionProposalComputer
+          categoryId="org.scala-ide.sdt.core.scalaProposalCategory"
+          class="scala.tools.eclipse.text.scala.ScalaCompletionProposalComputer">
+    </javaCompletionProposalComputer>
  </extension>
 </plugin>

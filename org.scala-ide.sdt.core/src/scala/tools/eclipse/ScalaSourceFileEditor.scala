@@ -5,6 +5,8 @@
 
 package scala.tools.eclipse
 
+import scala.tools.eclipse.javaelements.ScalaCompilationUnit
+import org.eclipse.jdt.internal.ui.JavaPlugin
 import java.util.ResourceBundle
 
 import org.eclipse.core.runtime.{ IAdaptable, IProgressMonitor }
@@ -30,6 +32,7 @@ import scala.collection.mutable
 import scala.tools.eclipse.javaelements.ScalaSourceFile
 import scala.tools.eclipse.markoccurrences.{ ScalaOccurrencesFinder, Occurrences }
 import scala.tools.eclipse.ui.semantic.highlighting.SemanticHighlightingPresenter
+import scala.tools.eclipse.text.scala.ScalaTypeAutoCompletionProposal
 
 class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
 
@@ -151,6 +154,10 @@ class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
 	getSourceViewer().getDocument().addDocumentListener(presenter)
 	ScalaPlugin.plugin.getPreferenceStore().addPropertyChangeListener(presenter)
 	presenter.update()
+	//workaround for my limited knowledge about current presentation compiler
+	val scu = JavaPlugin.getDefault().getWorkingCopyManager().getWorkingCopy(getEditorInput()).asInstanceOf[ScalaCompilationUnit];
+    val doc = getSourceViewer().getDocument()
+	getSourceViewer().getDocument().addPrenotifiedDocumentListener(ScalaTypeAutoCompletionProposal.createDefault(scu,doc))
   }
 
 }
