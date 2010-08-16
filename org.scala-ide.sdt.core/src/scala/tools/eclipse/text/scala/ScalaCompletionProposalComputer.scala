@@ -16,7 +16,7 @@ class ScalaCompletionProposalComputer extends IJavaCompletionProposalComputer {
 	override def sessionStarted(){}
  
 	override def computeCompletionProposals(context: ContentAssistInvocationContext, monitor: IProgressMonitor): List[ICompletionProposal] = {
-        val ret = new java.util.ArrayList[ICompletionProposal];        val activationChar = context.getDocument.getChar(context.getInvocationOffset-1);        if (activationChar.equals(':'))   {          val p = ScalaTypeAutoCompletionProposal.getDefault;          if (!p.getDisplayString.equals("<error>")) { ret.add(p); };        };		return ret;
+        val ret = new java.util.ArrayList[ICompletionProposal];        val activationChar = context.getDocument.getChar(context.getInvocationOffset-1);        if (activationChar.equals(':'))   {          val scu = context.asInstanceOf[JavaContentAssistInvocationContext].getCompilationUnit().asInstanceOf[ScalaCompilationUnit];          val p = ScalaTypeAutoCompletionProposalManager.getProposalFor(scu);          if (!p.getDisplayString.equals("<error>")) { ret.add(p); };        };		return ret;
 	}
  
 	override def computeContextInformation(context: ContentAssistInvocationContext, monitor: IProgressMonitor): List[IContextInformation] = {

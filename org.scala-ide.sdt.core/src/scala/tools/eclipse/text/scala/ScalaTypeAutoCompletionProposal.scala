@@ -1,7 +1,6 @@
-package scala.tools.eclipse.text.scala
-import java.io.PrintWriter
+package scala.tools.eclipse.text.scala;import java.io.PrintWriter
 import java.io.StringWriter
-
+import java.util.WeakHashMap
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.graphics.Image
 
@@ -32,4 +31,4 @@ class ScalaTypeAutoCompletionProposal(scu: ScalaCompilationUnit, doc: IDocument)
   
   def getRelevance() = Integer.MAX_VALUE //temporary hack for jdt 
 
-};object ScalaTypeAutoCompletionProposal {  var instance: ScalaTypeAutoCompletionProposal = _ ;  	  def createDefault(scu: ScalaCompilationUnit, doc: IDocument): ScalaTypeAutoCompletionProposal = {	  instance = new ScalaTypeAutoCompletionProposal(scu,doc);	  return instance;  };    def getDefault() = instance;}
+};object ScalaTypeAutoCompletionProposalManager {    val internalInstanceMap = new WeakHashMap[ScalaCompilationUnit,ScalaTypeAutoCompletionProposal];	  private def createProposal(scu: ScalaCompilationUnit) {	  val bufferManager= org.eclipse.core.filebuffers.FileBuffers.getTextFileBufferManager();	  val path= scu.getPath();	  try {	   bufferManager.connect(path, null);	   val doc = bufferManager.getTextFileBuffer(path).getDocument();// work with document}	   val instance = new ScalaTypeAutoCompletionProposal(scu,doc);	     internalInstanceMap.put(scu, instance)	  } finally {	 	  bufferManager.disconnect(path, null);	  };	    };    def getProposalFor(scu: ScalaCompilationUnit): ScalaTypeAutoCompletionProposal = {	  val ret = internalInstanceMap.get(scu);	  if (ret == null) {createProposal(scu)};	  return internalInstanceMap.get(scu);  }}
