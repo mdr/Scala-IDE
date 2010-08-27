@@ -16,22 +16,26 @@ Require-Bundle:
  org.eclipse.jface,
  org.eclipse.jface.text,
  org.eclipse.osgi,
+ org.eclipse.pde.ui,
  org.eclipse.ui,
  org.eclipse.ui.editors,
  org.eclipse.ui.ide,
- org.eclipse.ui.workbench.texteditor
+ org.eclipse.ui.workbench.texteditor,
+ org.eclipse.jdt.debug.ui
 Eclipse-SupplementBundle: 
  org.eclipse.debug.core,
  org.eclipse.jdt.core,
  org.eclipse.jdt.debug.ui,
  org.eclipse.jdt.launching,
- org.eclipse.jdt.ui
+ org.eclipse.jdt.ui,
+ org.eclipse.pde.ui
 Bundle-ActivationPolicy: lazy
 Export-Package: 
  scala.tools.eclipse.contribution.weaving.jdt,
  scala.tools.eclipse.contribution.weaving.jdt.builderoptions,
  scala.tools.eclipse.contribution.weaving.jdt.cfprovider,
  scala.tools.eclipse.contribution.weaving.jdt.core,
+ scala.tools.eclipse.contribution.weaving.jdt.debug,
  scala.tools.eclipse.contribution.weaving.jdt.hierarchy,
  scala.tools.eclipse.contribution.weaving.jdt.indexerprovider,
  scala.tools.eclipse.contribution.weaving.jdt.launching,
@@ -39,5 +43,6 @@ Export-Package:
  scala.tools.eclipse.contribution.weaving.jdt.spellingengineprovider,
  scala.tools.eclipse.contribution.weaving.jdt.ui,
  scala.tools.eclipse.contribution.weaving.jdt.ui.javaeditor,
- scala.tools.eclipse.contribution.weaving.jdt.ui.javaeditor.formatter
+ scala.tools.eclipse.contribution.weaving.jdt.ui.javaeditor.formatter,
+ scala.tools.eclipse.contribution.weaving.pde.ui
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
