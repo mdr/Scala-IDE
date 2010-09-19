@@ -331,11 +331,9 @@ class ScalaProject(val underlying : IProject) {
   def topLevelMap = {
     if (topLevelMap0 == null) {
       topLevelMap0 = new TopLevelMap
-      println("Building top-level map for: "+underlying.getName)
-      val start = System.currentTimeMillis
-      allSourceFiles.map(topLevelMap0.update)
-      val end = System.currentTimeMillis
-      println("Time: "+(end-start))
+      Tracer.timeOf("Building top-level map for: "+underlying.getName) {
+        topLevelMap0.resetWith(allSourceFiles)
+      }
     }
     topLevelMap0
   }
