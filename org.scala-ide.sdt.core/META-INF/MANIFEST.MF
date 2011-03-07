@@ -41,7 +41,8 @@ Require-Bundle:
  org.scala-ide.scala.library,
  org.scala-refactoring.library,
  scalariform,
- org.junit4;bundle-version="4.5.0"
+ org.junit4;bundle-version="4.5.0",
+ symbol-classifier;bundle-version="1.0.0"
 Import-Package: 
  scala.tools.nsc;apply-aspects:=false,
  scala.tools.nsc.ast;apply-aspects:=false,
