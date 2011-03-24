@@ -5,6 +5,7 @@
 
 package scala.tools.eclipse;
 
+import scala.tools.eclipse.ui.ScalaAutoIndentStrategy2
 //import scala.tools.eclipse.text.scala.ScalaCompletionProcessor
 import org.eclipse.jface.util.PropertyChangeEvent
 import org.eclipse.jdt.core.{ IJavaProject, IJavaElement, ICodeAssist }
@@ -109,9 +110,9 @@ class ScalaSourceViewerConfiguration(store: IPreferenceStore, scalaPreferenceSto
       case IJavaPartitions.JAVA_STRING =>
         Array(new SmartSemicolonAutoEditStrategy(partitioning), new JavaStringAutoIndentStrategy(partitioning))
       case IJavaPartitions.JAVA_CHARACTER | IDocument.DEFAULT_CONTENT_TYPE =>
-        Array()
+        Array(new ScalaAutoIndentStrategy2())
       case _ =>
-        Array(new ScalaAutoIndentStrategy(partitioning, getProject, sourceViewer, new JdtPreferenceProvider(getProject)))
+        Array(new ScalaAutoIndentStrategy2())
     }
   }
 
