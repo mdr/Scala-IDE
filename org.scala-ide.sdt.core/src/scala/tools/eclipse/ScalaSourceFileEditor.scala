@@ -6,6 +6,7 @@
 
 package scala.tools.eclipse
 
+import org.eclipse.ui.texteditor.SourceViewerDecorationSupport
 import org.eclipse.jdt.internal.ui.JavaPlugin
 import org.eclipse.ui.part.FileEditorInput
 import org.eclipse.swt.widgets.Composite
@@ -41,6 +42,8 @@ import org.eclipse.ui.IEditorInput
 import org.eclipse.jface.util.IPropertyChangeListener
 import org.eclipse.jface.util.PropertyChangeEvent
 import org.eclipse.jface.action.Action
+
+import scala.tools.eclipse.semantichighlighting._
 
 class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
 
