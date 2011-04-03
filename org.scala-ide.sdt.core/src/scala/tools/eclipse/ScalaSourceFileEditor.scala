@@ -161,19 +161,17 @@ class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
   // override to public scope (from protected)
   override def getElementAt(offset: Int, reconcile: Boolean) = super.getElementAt(offset, reconcile)
 
- override def reconciled(ast: CompilationUnit, forced: Boolean, progressMonitor: IProgressMonitor) {
-    super.reconciled(ast, forced, progressMonitor)
-
-    val scalaSourceFile = getEditorInput.asInstanceOf[IAdaptable].getAdapter(classOf[IJavaElement]).asInstanceOf[ScalaSourceFile]
-    scalaSourceFile.doWithSourceFile { (sourceFile, compiler) =>
-      val symbolInfos = new SymbolClassifier(sourceFile, compiler).classifySymbols
-      getSite.getShell.getDisplay.asyncExec(new Runnable() {
-        def run() = symbolStyler.updateSymbolAnnotations(symbolInfos, getSourceViewer)
-      })
-    }
-  }
-
-  private val symbolStyler = new SymbolStyler
+ //override def reconciled(ast: CompilationUnit, forced: Boolean, progressMonitor: IProgressMonitor) {
+    //super.reconciled(ast, forced, progressMonitor)
+//
+    //val scalaSourceFile = getEditorInput.asInstanceOf[IAdaptable].getAdapter(classOf[IJavaElement]).asInstanceOf[ScalaSourceFile]
+    //scalaSourceFile.doWithSourceFile { (sourceFile, compiler) =>
+      //val symbolInfos = new SymbolClassifier(sourceFile, compiler).classifySymbols
+      //getSite.getShell.getDisplay.asyncExec(new Runnable() {
+        //def run() = symbolStyler.updateSymbolAnnotations(symbolInfos, getSourceViewer)
+//      })
+    //}
+//  }
 
   override def configureSourceViewerDecorationSupport(support: SourceViewerDecorationSupport) {
     super.configureSourceViewerDecorationSupport(support)

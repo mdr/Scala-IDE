@@ -5,11 +5,11 @@ import org.eclipse.jface.text.source._
 import scala.collection.JavaConversions._
 import scala.collection.Set
 
-class SymbolStyler {
+class SymbolStyler(sourceViewer: ISourceViewer) {
 
   private var annotations: Set[Annotation] = Set()
 
-  def updateSymbolAnnotations(symbolInfos: List[SymbolInfo], sourceViewer: ISourceViewer) {
+  def updateSymbolAnnotations(symbolInfos: List[SymbolInfo]) {
     
     val annotationPositionPairs = for {
       SymbolInfo(symbolType, regions) <- symbolInfos

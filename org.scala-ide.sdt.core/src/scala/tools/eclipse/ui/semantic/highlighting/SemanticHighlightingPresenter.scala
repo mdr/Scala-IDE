@@ -3,7 +3,9 @@
  */
 package scala.tools.eclipse
 package ui.semantic.highlighting
-
+import org.eclipse.swt.widgets.Display
+import scala.tools.eclipse.semantichighlighting._
+import org.eclipse.ui.texteditor.SourceViewerDecorationSupport
 import org.eclipse.core.runtime.IPath
 import ui.ReconciliationParticipant
 import org.eclipse.core.runtime.IProgressMonitor
@@ -15,7 +17,7 @@ import org.eclipse.jface.text.IPainter
 import org.eclipse.jface.text.source.{ IAnnotationAccess, AnnotationPainter, IAnnotationModelExtension, Annotation, ISourceViewer }
 import org.eclipse.jface.util.{ PropertyChangeEvent, IPropertyChangeListener }
 import org.eclipse.swt.SWT
-import org.eclipse.ui.{PlatformUI, IPartListener, IWorkbenchPart}
+import org.eclipse.ui.{ PlatformUI, IPartListener, IWorkbenchPart }
 import org.eclipse.ui.part.FileEditorInput
 import scala.collection._
 import scala.tools.eclipse.util.Tracer
@@ -23,54 +25,55 @@ import scala.tools.eclipse.javaelements.ScalaCompilationUnit
 import scala.tools.eclipse.ui.preferences.PropertyChangeListenerProxy
 import scala.tools.eclipse.util.{ ColorManager, Annotations, AnnotationsTypes }
 
-
 /**
  * This class is instantiated by the reconciliationParticipants extension point and
  * simply forwards to the SemanticHighlightingReconciliation  object.
  */
 class SemanticHighlightingReconciliationParticipant extends ReconciliationParticipant {
-  
+
   override def afterReconciliation(scu: ScalaCompilationUnit, monitor: IProgressMonitor, workingCopyOwner: WorkingCopyOwner) {
     SemanticHighlightingReconciliation.afterReconciliation(scu, monitor, workingCopyOwner)
   }
+
 }
 
 /**
- * Manages the SemanticHighlightingPresenter instances for the open editors. 
- * 
+ * Manages the SemanticHighlightingPresenter instances for the open editors.
+ *
  * Each ScalaCompilationUnit has one associated SemanticHighlightingPresenter,
- * which is created the first time a reconciliation is performed for a 
+ * which is created the first time a reconciliation is performed for a
  * compilation unit. When the editor (respectively the IWorkbenchPart) is closed,
  * the SemanticHighlightingPresenter is removed.
- * 
+ *
  * @author Mirko Stocker
  */
 object SemanticHighlightingReconciliation {
 
   private val participants = new collection.mutable.HashMap[ScalaCompilationUnit, SemanticHighlightingPresenter]
-  
+  private val symbolStylers = new collection.mutable.HashMap[ScalaCompilationUnit, SymbolStyler]
+
   /**
    *  A listener that removes a  SemanticHighlightingPresenter when the part is closed.
    */
   class UnregisteringPartListener(scu: ScalaCompilationUnit) extends IPartListener {
-    
+
     def partClosed(part: IWorkbenchPart) {
       participants.remove(scu)
     }
-                  
-    def partActivated(part: IWorkbenchPart) {}  
+
+    def partActivated(part: IWorkbenchPart) {}
     def partBroughtToTop(part: IWorkbenchPart) {}
-    def partDeactivated(part: IWorkbenchPart) {} 
+    def partDeactivated(part: IWorkbenchPart) {}
     def partOpened(part: IWorkbenchPart) {}
   }
-  
+
   /**
    * Searches for the Editor that currently displays the compilation unit, then creates
-   * an instance of SemanticHighlightingPresenter. A listener is registered at the editor 
+   * an instance of SemanticHighlightingPresenter. A listener is registered at the editor
    * to remove the SemanticHighlightingPresenter when the editor is closed.
    */
-  def createSemantigHighlighterForEditor(scu: ScalaCompilationUnit) = {
-    
+  private def createSemanticHighlighterForEditor(scu: ScalaCompilationUnit) = {
+
     def getPagesWithEditors = {
       PlatformUI.getWorkbench.getWorkbenchWindows flatMap (_.getPages) flatMap { page =>
         page.getEditorReferences.toList map (_.getEditor(false)) collect {
@@ -78,28 +81,36 @@ object SemanticHighlightingReconciliation {
         }
       }
     }
-    
+
     getPagesWithEditors flatMap {
-      case (page, editor) => 
+      case (page, editor) =>
         Option(editor.getEditorInput) collect {
           case editorInput: FileEditorInput if editorInput.getPath equals scu.getResource.getLocation =>
-                      
             page.addPartListener(new UnregisteringPartListener(scu))
-              
-            new SemanticHighlightingPresenter(editorInput, editor.sourceViewer)
+            (new SemanticHighlightingPresenter(editorInput, editor.sourceViewer), new SymbolStyler(editor.sourceViewer))
         }
     }
   }
-  
+
   def afterReconciliation(scu: ScalaCompilationUnit, monitor: IProgressMonitor, workingCopyOwner: WorkingCopyOwner) {
-    
+
     val firstTimeReconciliation = !participants.contains(scu)
-    
-    if(firstTimeReconciliation) {
-       createSemantigHighlighterForEditor(scu) foreach (participants(scu) = _)
+
+    if (firstTimeReconciliation) {
+      createSemanticHighlighterForEditor(scu) foreach {
+        case (presenter, styler) =>
+          participants(scu) = presenter
+          symbolStylers(scu) = styler
+      }
+
     }
-    
+
     participants(scu).update(scu, monitor, workingCopyOwner)
+
+    scu.doWithSourceFile { (sourceFile, compiler) =>
+      val symbolInfos = new SymbolClassifier(sourceFile, compiler).classifySymbols
+      symbolStylers(scu).updateSymbolAnnotations(symbolInfos)
+    }
   }
 }
 
