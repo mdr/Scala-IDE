@@ -25,9 +25,8 @@ import org.eclipse.jdt.internal.ui.text.spelling.engine.ISpellEventListener
 import org.eclipse.jdt.internal.ui.text.spelling.engine.ISpellEvent
 import org.eclipse.jdt.internal.ui.text.spelling.JavaSpellingProblem
 
-/**
- * Provides a replacement for {@link org.eclipse.jdt.internal.ui.text.spelling.JavaSpellingEngine} which is aware of Scala partitions, 
- * and so can avoid spell checking in certain regions.
+/** Provides a replacement for {@link org.eclipse.jdt.internal.ui.text.spelling.JavaSpellingEngine} which is aware of Scala partitions,
+ *  and so can avoid spell checking in certain regions.
  */
 class ScalaSpellingEngineProvider extends ISpellingEngineProvider {
 

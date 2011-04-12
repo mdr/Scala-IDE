@@ -18,7 +18,7 @@ class ScalaFormatterCleanUpProvider extends IFormatterCleanUpProvider {
   def createCleanUp(cu: ICompilationUnit): ICleanUpFix = {
     val document = cu.getBuffer match {
       case adapter: DocumentAdapter => adapter.getDocument
-      case _ => new Document(cu.getBuffer.getContents)
+      case _                        => new Document(cu.getBuffer.getContents)
     }
     val lineDelimiter = TextUtilities.getDefaultLineDelimiter(document)
 

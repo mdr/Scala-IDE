@@ -25,15 +25,13 @@ import scala.tools.eclipse.util.EclipseUtils._
  * the JDTs method search works correctly for Scala.
  */
 
-/**
- * This class extends the Java Launch functionality and overrides the sections that
- * require finding the main method as well as finding and creating new launch 
- * configurations.
+/** This class extends the Java Launch functionality and overrides the sections that
+ *  require finding the main method as well as finding and creating new launch
+ *  configurations.
  */
 class ScalaLaunchShortcut extends JavaLaunchShortcut {
 
-  /**
-   * findTypes is the entry method that is used to find main types within a given class.
+  /** findTypes is the entry method that is used to find main types within a given class.
    */
   override def findTypes(elements: Array[AnyRef], context: IRunnableContext): Array[IType] = {
     if (elements == null || elements.isEmpty)
@@ -43,9 +41,8 @@ class ScalaLaunchShortcut extends JavaLaunchShortcut {
     }
   }
 
-  /**
-   * Given that the element name for a Scala module appends a $ the java based method can not be re-used.  It is 
-   * largely re-implemented here with the appropriate element name made available.
+  /** Given that the element name for a Scala module appends a $ the java based method can not be re-used.  It is
+   *  largely re-implemented here with the appropriate element name made available.
    */
   override def createConfiguration(t: IType): ILaunchConfiguration = {
     val launchInstanceName = t.getElementName
@@ -57,11 +54,10 @@ class ScalaLaunchShortcut extends JavaLaunchShortcut {
     wc.doSave
   }
 
-  /**
-   * Finds and returns an <b>existing</b> configuration to re-launch for the given type,   
-   * or <code>null</code> if there is no existing configuration.
-   * 
-   * @return a configuration to use for launching the given type or <code>null</code> if none
+  /** Finds and returns an <b>existing</b> configuration to re-launch for the given type,
+   *  or <code>null</code> if there is no existing configuration.
+   *
+   *  @return a configuration to use for launching the given type or <code>null</code> if none
    */
   override def findLaunchConfiguration(t: IType, configType: ILaunchConfigurationType): ILaunchConfiguration = {
     //Get working values / collections
@@ -92,14 +88,13 @@ class ScalaLaunchShortcut extends JavaLaunchShortcut {
       null
   }
 
-  /**
-   * Returns a configuration from the given collection of configurations that should be launched,
-   * or <code>null</code> to cancel. Default implementation opens a selection dialog that allows
-   * the user to choose one of the specified launch configurations.  Returns the chosen configuration,
-   * or <code>null</code> if the user cancels.
-   * 
-   * @param configList list of configurations to choose from
-   * @return configuration to launch or <code>null</code> to cancel
+  /** Returns a configuration from the given collection of configurations that should be launched,
+   *  or <code>null</code> to cancel. Default implementation opens a selection dialog that allows
+   *  the user to choose one of the specified launch configurations.  Returns the chosen configuration,
+   *  or <code>null</code> if the user cancels.
+   *
+   *  @param configList list of configurations to choose from
+   *  @return configuration to launch or <code>null</code> to cancel
    */
   private def chooseConfiguration(configList: List[ILaunchConfiguration]): ILaunchConfiguration = {
     import org.eclipse.ui.dialogs.ElementListSelectionDialog
@@ -122,12 +117,11 @@ class ScalaLaunchShortcut extends JavaLaunchShortcut {
       null
   }
 
-  /**
-   * Utility method to shorten the retrieval of the launch manager
+  /** Utility method to shorten the retrieval of the launch manager
    */
   private def getLaunchManager =
     DebugPlugin.getDefault.getLaunchManager
-    
+
   private def fullyQualifiedName(t: IType) = {
     val nm = t.getFullyQualifiedName
     if (nm.endsWith("$"))
@@ -136,9 +130,8 @@ class ScalaLaunchShortcut extends JavaLaunchShortcut {
       nm
   }
 
-  /**
-   * Required to have the new launch configuration be placed as a Scala Launch configuration instead of a Java 
-   * Launch Configuration
+  /** Required to have the new launch configuration be placed as a Scala Launch configuration instead of a Java
+   *  Launch Configuration
    */
   override def getConfigurationType =
     getLaunchManager.getLaunchConfigurationType("scala.application")

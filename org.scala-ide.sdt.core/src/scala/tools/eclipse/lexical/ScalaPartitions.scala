@@ -1,12 +1,11 @@
 package scala.tools.eclipse.lexical
 
-/**
- * @see org.eclipse.jdt.ui.text.IJavaPartitions
+/** @see org.eclipse.jdt.ui.text.IJavaPartitions
  */
 object ScalaPartitions {
 
   val SCALA_MULTI_LINE_STRING = "__scala_multiline_string"
-		
+
   val XML_TAG = "__xml_tag"
   val XML_CDATA = "__xml_cdata"
   val XML_COMMENT = "__xml_comment"

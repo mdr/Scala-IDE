@@ -1,5 +1,4 @@
 /**
- * 
  */
 package scala.tools.eclipse.templates
 
@@ -32,45 +31,44 @@ import org.eclipse.jdt.internal.ui.text.template.contentassist.TemplateEngine;
 //Default ctor to make it instantiatable via the extension mechanism. 
 //TODO clean up import
 class TemplateCompletionProposalComputer extends IJavaCompletionProposalComputer {
-  
-    /** The wrapped processor. */
-    private
-    val _processor = new ScalaTemplateCompletionProcessor(ScalaPlugin.plugin.templateManager)
 
-    /*
+  /** The wrapped processor. */
+  private val _processor = new ScalaTemplateCompletionProcessor(ScalaPlugin.plugin.templateManager)
+
+  /*
      * @see org.eclipse.jface.text.contentassist.ICompletionProposalComputer#computeCompletionProposals(org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext, org.eclipse.core.runtime.IProgressMonitor)
      */
-    def computeCompletionProposals(context : ContentAssistInvocationContext,  monitor : IProgressMonitor) : java.util.List[ICompletionProposal]= {
-      _processor.computeCompletionProposals(context.getViewer(), context.getInvocationOffset()) match {
-        case null => Collections.EMPTY_LIST.asInstanceOf[java.util.List[ICompletionProposal]]
-        case a => Arrays.asList(a : _*)
-      }
+  def computeCompletionProposals(context: ContentAssistInvocationContext, monitor: IProgressMonitor): java.util.List[ICompletionProposal] = {
+    _processor.computeCompletionProposals(context.getViewer(), context.getInvocationOffset()) match {
+      case null => Collections.EMPTY_LIST.asInstanceOf[java.util.List[ICompletionProposal]]
+      case a    => Arrays.asList(a: _*)
     }
+  }
 
-    /*
+  /*
      * @see org.eclipse.jface.text.contentassist.ICompletionProposalComputer#computeContextInformation(org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext, org.eclipse.core.runtime.IProgressMonitor)
      */
-    def computeContextInformation(context : ContentAssistInvocationContext, monitor : IProgressMonitor) : java.util.List[IContextInformation] = {
-      _processor.computeContextInformation(context.getViewer(), context.getInvocationOffset()) match {
-        case null => Collections.EMPTY_LIST.asInstanceOf[java.util.List[IContextInformation]]
-        case a => Arrays.asList(a : _*)
-      }
+  def computeContextInformation(context: ContentAssistInvocationContext, monitor: IProgressMonitor): java.util.List[IContextInformation] = {
+    _processor.computeContextInformation(context.getViewer(), context.getInvocationOffset()) match {
+      case null => Collections.EMPTY_LIST.asInstanceOf[java.util.List[IContextInformation]]
+      case a    => Arrays.asList(a: _*)
     }
+  }
 
-    /*
+  /*
      * @see org.eclipse.jface.text.contentassist.ICompletionProposalComputer#getErrorMessage()
      */
-    def getErrorMessage() = _processor.getErrorMessage()
+  def getErrorMessage() = _processor.getErrorMessage()
 
-    /*
+  /*
      * @see org.eclipse.jdt.ui.text.java.IJavaCompletionProposalComputer#sessionStarted()
      */
-    def sessionStarted() {}
+  def sessionStarted() {}
 
-    /*
+  /*
      * @see org.eclipse.jdt.ui.text.java.IJavaCompletionProposalComputer#sessionEnded()
      */
-    def sessionEnded() {}
+  def sessionEnded() {}
 }
 
 //Take inspiration from :

@@ -14,10 +14,10 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate
 trait ActionAdapter extends IWorkbenchWindowActionDelegate with IEditorActionDelegate {
 
   def setActiveEditor(action: IAction, targetEditor: IEditorPart) = ()
-  
+
   def init(window: IWorkbenchWindow) = ()
-  
+
   def dispose() = ()
-  
+
   def selectionChanged(action: IAction, selection: ISelection) = ()
 }

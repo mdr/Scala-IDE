@@ -15,35 +15,35 @@ import org.eclipse.jface.viewers.IStructuredSelection
 
 abstract class AbstractNewElementWizard(wizardPage: AbstractNewElementWizardPage)
   extends NewElementWizard {
-	
+
   setWindowTitle("Create a new Scala " + wizardPage.declarationType)
-  
+
   override def addPages(): Unit = {
     super.addPages()
     addPage(wizardPage)
     wizardPage.init(getSelection())
   }
-  
+
   override def performFinish(): Boolean = {
 
     val requestAccepted = super.performFinish()
-    
-    if(requestAccepted) {
+
+    if (requestAccepted) {
       val resource = wizardPage.getModifiedResource()
-      if(resource != null) {
+      if (resource != null) {
         selectAndReveal(resource)
         openResource(resource.asInstanceOf[IFile])
       }
     }
     requestAccepted
   }
-  
-  override protected def canRunForked(): Boolean = 
+
+  override protected def canRunForked(): Boolean =
     !wizardPage.isEnclosingTypeSelected()
-	
-  def getCreatedElement(): IJavaElement = 
+
+  def getCreatedElement(): IJavaElement =
     wizardPage.getCreatedType
-  
-  override protected def finishPage(monitor: IProgressMonitor): Unit = 
+
+  override protected def finishPage(monitor: IProgressMonitor): Unit =
     wizardPage.createType(monitor)
 }

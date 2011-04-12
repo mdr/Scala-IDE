@@ -24,58 +24,58 @@ import scala.tools.eclipse.ScalaPlugin
 
 object FileUtils {
   import ScalaPlugin.plugin
-  
-  def length(file : IFile) = {
+
+  def length(file: IFile) = {
     val fs = FileBuffers.getFileStoreAtLocation(file.getLocation)
     if (fs != null)
       fs.fetchInfo.getLength.toInt
     else
       -1
   }
-  
-  def clearBuildErrors(file : IFile, monitor : IProgressMonitor) =
+
+  def clearBuildErrors(file: IFile, monitor: IProgressMonitor) =
     try {
       file.getWorkspace.run(new IWorkspaceRunnable {
-        def run(monitor : IProgressMonitor) = file.deleteMarkers(plugin.problemMarkerId, true, IResource.DEPTH_INFINITE)
+        def run(monitor: IProgressMonitor) = file.deleteMarkers(plugin.problemMarkerId, true, IResource.DEPTH_INFINITE)
       }, monitor)
     } catch {
-      case _ : ResourceException =>
+      case _: ResourceException =>
     }
-  
-  def clearTasks(file : IFile, monitor : IProgressMonitor) =
+
+  def clearTasks(file: IFile, monitor: IProgressMonitor) =
     try {
       file.getWorkspace.run(new IWorkspaceRunnable {
-        def run(monitor : IProgressMonitor) = file.deleteMarkers(IJavaModelMarker.TASK_MARKER, true, IResource.DEPTH_INFINITE)
+        def run(monitor: IProgressMonitor) = file.deleteMarkers(IJavaModelMarker.TASK_MARKER, true, IResource.DEPTH_INFINITE)
       }, monitor)
     } catch {
-      case _ : ResourceException =>
+      case _: ResourceException =>
     }
-  
-  def findBuildErrors(file : IResource) : Seq[IMarker] =
+
+  def findBuildErrors(file: IResource): Seq[IMarker] =
     file.findMarkers(plugin.problemMarkerId, true, IResource.DEPTH_INFINITE)
 
-  def hasBuildErrors(file : IResource) : Boolean =
+  def hasBuildErrors(file: IResource): Boolean =
     file.findMarkers(plugin.problemMarkerId, true, IResource.DEPTH_INFINITE).exists(_.getAttribute(IMarker.SEVERITY) == IMarker.SEVERITY_ERROR)
-  
-  def buildError(file : IFile, severity : Int, msg : String, offset : Int, length : Int, line : Int, monitor : IProgressMonitor) =
+
+  def buildError(file: IFile, severity: Int, msg: String, offset: Int, length: Int, line: Int, monitor: IProgressMonitor) =
     file.getWorkspace.run(new IWorkspaceRunnable {
-      def run(monitor : IProgressMonitor) = {
+      def run(monitor: IProgressMonitor) = {
         val mrk = file.createMarker(plugin.problemMarkerId)
         mrk.setAttribute(IMarker.SEVERITY, severity)
-        
+
         // Marker attribute values are limited to <= 65535 bytes and setAttribute will assert if they
         // exceed this. To guard against this we trim to <= 21000 characters ... see
         // org.eclipse.core.internal.resources.MarkerInfo.checkValidAttribute for justification
         // of this arbitrary looking number
         val maxMarkerLen = 21000
         val trimmedMsg = msg.take(maxMarkerLen)
-        
+
         val attrValue = trimmedMsg.map {
           case '\n' | '\r' => ' '
-          case c => c
+          case c           => c
         }
-        
-        mrk.setAttribute(IMarker.MESSAGE , attrValue)
+
+        mrk.setAttribute(IMarker.MESSAGE, attrValue)
 
         if (offset != -1) {
           mrk.setAttribute(IMarker.CHAR_START, offset)
@@ -85,19 +85,19 @@ object FileUtils {
       }
     }, monitor)
 
-  def task(file : IFile, tag : String, msg : String, priority : String, offset : Int, length : Int, line : Int, monitor : IProgressMonitor) =
+  def task(file: IFile, tag: String, msg: String, priority: String, offset: Int, length: Int, line: Int, monitor: IProgressMonitor) =
     file.getWorkspace.run(new IWorkspaceRunnable {
-      def run(monitor : IProgressMonitor) = {
+      def run(monitor: IProgressMonitor) = {
         val mrk = file.createMarker(IJavaModelMarker.TASK_MARKER)
         val values = new Array[AnyRef](taskMarkerAttributeNames.length)
 
         val prioNum = priority match {
           case JavaCore.COMPILER_TASK_PRIORITY_HIGH => IMarker.PRIORITY_HIGH
-          case JavaCore.COMPILER_TASK_PRIORITY_LOW => IMarker.PRIORITY_LOW
-          case _ => IMarker.PRIORITY_NORMAL
+          case JavaCore.COMPILER_TASK_PRIORITY_LOW  => IMarker.PRIORITY_LOW
+          case _                                    => IMarker.PRIORITY_NORMAL
         }
-        
-        values(0) = tag+" "+msg
+
+        values(0) = tag + " " + msg
         values(1) = Integer.valueOf(prioNum)
         values(2) = Integer.valueOf(IProblem.Task)
         values(3) = Integer.valueOf(offset)
@@ -117,6 +117,5 @@ object FileUtils {
     IMarker.CHAR_END,
     IMarker.LINE_NUMBER,
     IMarker.USER_EDITABLE,
-    IMarker.SOURCE_ID
-  )
+    IMarker.SOURCE_ID)
 }

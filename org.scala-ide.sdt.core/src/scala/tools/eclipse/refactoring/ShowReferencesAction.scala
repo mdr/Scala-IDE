@@ -32,49 +32,49 @@ import scala.tools.eclipse.ScalaPlugin
 import org.eclipse.jface.text.link._
 
 class ShowReferencesAction extends RefactoringAction {
-  
+
   def createRefactoring(selectionStart: Int, selectionEnd: Int, file: ScalaSourceFile) = {
 
-    file.withSourceFile{ (sourceFile, compiler) => 
-    
-      val refactoring = new GlobalIndexes with Selections with PimpedTrees { 
+    file.withSourceFile { (sourceFile, compiler) =>
+
+      val refactoring = new GlobalIndexes with Selections with PimpedTrees {
         val global = compiler
         val index: IndexLookup = null
       }
-              
+
       val (from, to) = (selectionStart, selectionEnd) match {
         case (f, t) if f == t => (f - 1, t + 1) // pretend that we have a selection
-        case x => x
+        case x                => x
       }
-      
+
       val selection = new refactoring.FileSelection(sourceFile.file, from, to)
-                          
+
       EditorHelpers.withCurrentEditor { editor =>
-      
+
         val compilationUnitIndices = ScalaPlugin.plugin.getScalaProject(editor.getEditorInput).allSourceFiles.toList flatMap { f =>
-          
-          ScalaSourceFile.createFromPath(f.getFullPath.toString) map (_.withSourceFile { (source1, _) => 
+
+          ScalaSourceFile.createFromPath(f.getFullPath.toString) map (_.withSourceFile { (source1, _) =>
             val body = compiler.body(source1)
-            if(body.pos.isRange) {
+            if (body.pos.isRange) {
               Some(refactoring.CompilationUnitIndex(refactoring.global.unitOf(body.pos.source).body))
             } else {
-              println("skipped indexing "+ f.getFullPath.toString)
+              println("skipped indexing " + f.getFullPath.toString)
               None
             }
-          } ())
-        } flatten 
-        
+          }())
+        } flatten
+
         val index = refactoring.GlobalIndex(compilationUnitIndices)
-        
+
         selection.selectedSymbolTree map { symTree =>
-            println(symTree.symbol.nameString +" is referenced in: ")
-            index.references(symTree.symbol) foreach { t =>
+          println(symTree.symbol.nameString + " is referenced in: ")
+          index.references(symTree.symbol) foreach { t =>
             println("%s:%s\t%s".format(t.pos.source.file.name, t.pos.line, t.pos.lineContent))
           }
         }
 
         None
       }
-    } ()
+    }()
   }
 }

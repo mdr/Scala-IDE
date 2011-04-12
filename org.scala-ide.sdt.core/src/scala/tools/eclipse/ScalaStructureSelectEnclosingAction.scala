@@ -8,8 +8,7 @@ import org.eclipse.jface.text.ITextSelection
 import scalariform.parser.ScalaParserException
 import scalariform.astselect.AstSelector
 import scalariform.utils.Range
-/**
- * A Scala-aware replacement for {@link org.eclipse.jdt.internal.ui.javaeditor.selectionactions.StructureSelectEnclosingAction}.
+/** A Scala-aware replacement for {@link org.eclipse.jdt.internal.ui.javaeditor.selectionactions.StructureSelectEnclosingAction}.
  */
 class ScalaStructureSelectEnclosingAction(editor: ScalaSourceFileEditor, selectionHistory: SelectionHistory) extends Action {
 

@@ -12,4 +12,3 @@ class ScalaRefactoringWizard(refactoring: ScalaIdeRefactoring, flags: Int = Refa
     refactoring.getPages foreach addPage
   }
 }
-  

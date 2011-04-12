@@ -124,7 +124,6 @@ class XmlTagScanner(val colorManager: IColorManager, val preferenceStore: IPrefe
         getXmlAttributeValue(quote)
     }
 
-
 }
 
 object XmlTagScanner {

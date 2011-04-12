@@ -19,10 +19,9 @@ import scala.tools.eclipse.ScalaPlugin
 import scala.tools.eclipse.util.ReflectionUtils
 
 class ScalaProjectWizard extends {
-    val pageOne = new NewScalaProjectWizardPageOne
-    val pageTwo = new NewScalaProjectWizardPageTwo(pageOne)
-  }
-  with JavaProjectWizard(pageOne, pageTwo) {
+  val pageOne = new NewScalaProjectWizardPageOne
+  val pageTwo = new NewScalaProjectWizardPageTwo(pageOne)
+} with JavaProjectWizard(pageOne, pageTwo) {
   setWindowTitle("New Scala Project")
   setDefaultPageImageDescriptor(ScalaImages.SCALA_PROJECT_WIZARD);
 
@@ -30,15 +29,15 @@ class ScalaProjectWizard extends {
   pageTwo.setTitle("Scala Settings")
   pageTwo.setDescription("Define the Scala build settings.")
 }
-  
+
 class NewScalaProjectWizardPageOne extends NewJavaProjectWizardPageOne {
-  override def getDefaultClasspathEntries() : Array[IClasspathEntry] =
-    (JavaCore.newContainerEntry(Path.fromPortableString(ScalaPlugin.plugin.scalaLibId)) +=: ArrayBuffer(super.getDefaultClasspathEntries : _*)).toArray
+  override def getDefaultClasspathEntries(): Array[IClasspathEntry] =
+    (JavaCore.newContainerEntry(Path.fromPortableString(ScalaPlugin.plugin.scalaLibId)) +=: ArrayBuffer(super.getDefaultClasspathEntries: _*)).toArray
 }
 
-class NewScalaProjectWizardPageTwo(pageOne : NewJavaProjectWizardPageOne) extends NewJavaProjectWizardPageTwo(pageOne) {
+class NewScalaProjectWizardPageTwo(pageOne: NewJavaProjectWizardPageOne) extends NewJavaProjectWizardPageTwo(pageOne) {
   import NewScalaProjectWizardPageTwoUtils._
-  override def configureJavaProject(newProjectCompliance : String, monitor0 : IProgressMonitor) {
+  override def configureJavaProject(newProjectCompliance: String, monitor0: IProgressMonitor) {
     val monitor = if (monitor0 != null) monitor0 else new NullProgressMonitor
     val nSteps = 6
     monitor.beginTask(NewWizardMessages.JavaCapabilityConfigurationPage_op_desc_java, nSteps)
@@ -47,19 +46,19 @@ class NewScalaProjectWizardPageTwo(pageOne : NewJavaProjectWizardPageOne) extend
       addScalaNatures(new SubProgressMonitor(monitor, 1))
       getBuildPathsBlock(this).configureJavaProject(newProjectCompliance, new SubProgressMonitor(monitor, 5))
     } catch {
-      case ex : OperationCanceledException => throw new InterruptedException
+      case ex: OperationCanceledException => throw new InterruptedException
     } finally {
       monitor.done
     }
   }
 
-  def addScalaNatures(monitor : IProgressMonitor) {
+  def addScalaNatures(monitor: IProgressMonitor) {
     if (monitor != null && monitor.isCanceled)
       throw new OperationCanceledException
     val project = getJavaProject.getProject
     if (!project.hasNature(JavaCore.NATURE_ID)) {
       val desc = project.getDescription
-      val natures = ArrayBuffer(desc.getNatureIds : _*) + ScalaPlugin.plugin.natureId + JavaCore.NATURE_ID
+      val natures = ArrayBuffer(desc.getNatureIds: _*) + ScalaPlugin.plugin.natureId + JavaCore.NATURE_ID
       desc.setNatureIds(natures.toArray)
       project.setDescription(desc, monitor)
     } else {
@@ -73,6 +72,6 @@ class NewScalaProjectWizardPageTwo(pageOne : NewJavaProjectWizardPageOne) extend
 object NewScalaProjectWizardPageTwoUtils extends ReflectionUtils {
   val jccpClazz = classOf[JavaCapabilityConfigurationPage]
   val getBuildPathsBlockMethod = getDeclaredMethod(jccpClazz, "getBuildPathsBlock")
-  
-  def getBuildPathsBlock(jccp : JavaCapabilityConfigurationPage) = getBuildPathsBlockMethod.invoke(jccp).asInstanceOf[BuildPathsBlock]
+
+  def getBuildPathsBlock(jccp: JavaCapabilityConfigurationPage) = getBuildPathsBlockMethod.invoke(jccp).asInstanceOf[BuildPathsBlock]
 }

@@ -6,41 +6,41 @@ package scala.tools.eclipse
 
 import org.eclipse.core.resources.ResourcesPlugin
 import org.eclipse.core.runtime.Path
-import org.eclipse.jdt.core.{ICodeAssist, IJavaElement}
-import org.eclipse.jface.text.{IRegion, ITextViewer}
-import org.eclipse.jface.text.hyperlink.{AbstractHyperlinkDetector, IHyperlink}
-import org.eclipse.jdt.internal.core.{ClassFile,Openable}
+import org.eclipse.jdt.core.{ ICodeAssist, IJavaElement }
+import org.eclipse.jface.text.{ IRegion, ITextViewer }
+import org.eclipse.jface.text.hyperlink.{ AbstractHyperlinkDetector, IHyperlink }
+import org.eclipse.jdt.internal.core.{ ClassFile, Openable }
 import org.eclipse.ui.texteditor.ITextEditor
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit
 import org.eclipse.jdt.ui.actions.SelectionDispatchAction
-import org.eclipse.jdt.internal.ui.javaeditor.{EditorUtility, JavaElementHyperlink}
+import org.eclipse.jdt.internal.ui.javaeditor.{ EditorUtility, JavaElementHyperlink }
 import org.eclipse.jdt.ui.actions.OpenAction
 import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor
 
 import scala.reflect.generic.Flags._
 import scala.tools.nsc.io.AbstractFile
 
-import javaelements.{ScalaSourceFile, ScalaClassFile, ScalaCompilationUnit, ScalaSelectionEngine, ScalaSelectionRequestor}
+import javaelements.{ ScalaSourceFile, ScalaClassFile, ScalaCompilationUnit, ScalaSelectionEngine, ScalaSelectionRequestor }
 import util.Logger
 
 class ScalaHyperlinkDetector extends AbstractHyperlinkDetector with Logger {
-  def detectHyperlinks(viewer : ITextViewer, region : IRegion, canShowMultipleHyperlinks : Boolean) : Array[IHyperlink] = {
+  def detectHyperlinks(viewer: ITextViewer, region: IRegion, canShowMultipleHyperlinks: Boolean): Array[IHyperlink] = {
     val textEditor = getAdapter(classOf[ITextEditor]).asInstanceOf[ITextEditor]
     detectHyperlinks(textEditor, region, canShowMultipleHyperlinks)
   }
 
-  case class Hyperlink(file: Openable, pos: Int)(wordRegion: IRegion)  extends IHyperlink {
+  case class Hyperlink(file: Openable, pos: Int)(wordRegion: IRegion) extends IHyperlink {
     def getHyperlinkRegion = wordRegion
     def getTypeLabel = null
     def getHyperlinkText = "Open Declaration"
     def open = {
       EditorUtility.openInEditor(file, true) match {
         case editor: ITextEditor => editor.selectAndReveal(pos, 0)
-        case _ =>
+        case _                   =>
       }
     }
   }
-  
+
   def detectHyperlinks(textEditor: ITextEditor, region: IRegion, canShowMultipleHyperlinks: Boolean): Array[IHyperlink] = {
     if (textEditor == null) // can be null if generated through ScalaPreviewerFactory
       null
@@ -61,7 +61,7 @@ class ScalaHyperlinkDetector extends AbstractHyperlinkDetector with Logger {
               log("detectHyperlinks: wordRegion = " + wordRegion)
               val hyperlinks: Option[Hyperlink] = compiler.ask { () =>
                 import compiler.{ log => _, _ }
-                
+
                 typed.left.toOption map {
                   case Import(expr, sels) => sels find (_.namePos >= pos.start) map (sel => expr.tpe.member(sel.name)) getOrElse NoSymbol
                   case Annotated(atp, _)  => atp.symbol
@@ -85,9 +85,9 @@ class ScalaHyperlinkDetector extends AbstractHyperlinkDetector with Logger {
         case _ => null
       }
   }
-  
+
   //Default path used for selecting.
-  def codeSelect(textEditor : ITextEditor, wordRegion : IRegion, scu : ScalaCompilationUnit) : Array[IHyperlink] = {
+  def codeSelect(textEditor: ITextEditor, wordRegion: IRegion, scu: ScalaCompilationUnit): Array[IHyperlink] = {
     try {
       val environment = scu.newSearchableEnvironment()
       val requestor = new ScalaSelectionRequestor(environment.nameLookup, scu)
@@ -96,8 +96,8 @@ class ScalaHyperlinkDetector extends AbstractHyperlinkDetector with Logger {
       engine.select(scu, offset, offset + wordRegion.getLength - 1)
       val elements = requestor.getElements
 
-      if (elements.length == 0) 
-        null 
+      if (elements.length == 0)
+        null
       else {
         val qualify = elements.length > 1
         val openAction = new OpenAction(textEditor.asInstanceOf[JavaEditor])
@@ -105,6 +105,6 @@ class ScalaHyperlinkDetector extends AbstractHyperlinkDetector with Logger {
       }
     } catch {
       case _ => null
-    }    	  
+    }
   }
 }

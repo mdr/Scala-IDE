@@ -19,30 +19,30 @@ import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility
 
 import scala.tools.eclipse.{ ScalaPresentationCompiler, ScalaPlugin }
 
-trait ScalaOverrideIndicatorBuilder { self : ScalaPresentationCompiler =>
-  class OverrideIndicatorBuilderTraverser(scu : ScalaCompilationUnit, annotationMap : JMap[AnyRef, AnyRef]) extends Traverser {
-    val ANNOTATION_TYPE= "org.eclipse.jdt.ui.overrideIndicator"
+trait ScalaOverrideIndicatorBuilder { self: ScalaPresentationCompiler =>
+  class OverrideIndicatorBuilderTraverser(scu: ScalaCompilationUnit, annotationMap: JMap[AnyRef, AnyRef]) extends Traverser {
+    val ANNOTATION_TYPE = "org.eclipse.jdt.ui.overrideIndicator"
 
-    case class ScalaIndicator(text : String, base: Symbol, val isOverwrite : Boolean) 
+    case class ScalaIndicator(text: String, base: Symbol, val isOverwrite: Boolean)
       extends Annotation(ANNOTATION_TYPE, false, text) with IScalaOverrideIndicator {
       def open = {
-        ask{ () => locate(base, scu) } map { case (file, pos) =>
-    	  EditorUtility.openInEditor(file, true) match { 
-            case editor : ITextEditor => editor.selectAndReveal(pos, 0)
-            case _ =>
-          }
+        ask { () => locate(base, scu) } map {
+          case (file, pos) =>
+            EditorUtility.openInEditor(file, true) match {
+              case editor: ITextEditor => editor.selectAndReveal(pos, 0)
+              case _                   =>
+            }
         }
       }
     }
 
     case class JavaIndicator(
-      packageName : String,
-      typeNames : String,
-      methodName : String,
-      methodTypeSignatures : List[String],
-      text : String,
-      val isOverwrite : Boolean
-    ) extends Annotation(ANNOTATION_TYPE, false, text) with IScalaOverrideIndicator {
+      packageName: String,
+      typeNames: String,
+      methodName: String,
+      methodTypeSignatures: List[String],
+      text: String,
+      val isOverwrite: Boolean) extends Annotation(ANNOTATION_TYPE, false, text) with IScalaOverrideIndicator {
       def open() {
         val tpe0 = JDTUtils.resolveType(scu.newSearchableEnvironment().nameLookup, packageName, typeNames, 0)
         tpe0 match {
@@ -52,18 +52,18 @@ trait ScalaOverrideIndicatorBuilder { self : ScalaPresentationCompiler =>
               JavaUI.openInEditor(method, true, true);
           case _ =>
         }
-     }
+      }
     }
-    
+
     override def traverse(tree: Tree): Unit = {
       tree match {
         case defn: DefTree if (defn.symbol ne NoSymbol) && defn.symbol.pos.isOpaqueRange =>
           try {
-            for(base <- defn.symbol.allOverriddenSymbols) {
+            for (base <- defn.symbol.allOverriddenSymbols) {
               val isOverwrite = base.isDeferred && !defn.symbol.isDeferred
               val text = (if (isOverwrite) "implements " else "overrides ") + base.fullName
               val position = new JFacePosition(defn.pos.startOrPoint, 0)
-  
+
               if (base.isJavaDefined) {
                 val packageName = base.enclosingPackage.fullName
                 val typeNames = enclosingTypeNames(base).mkString(".")
@@ -74,11 +74,11 @@ trait ScalaOverrideIndicatorBuilder { self : ScalaPresentationCompiler =>
               } else annotationMap.put(ScalaIndicator(text, base, isOverwrite), position)
             }
           } catch {
-            case ex => ScalaPlugin.plugin.logError("Error creating override indicators for %s".format(scu.file.path), ex) 
+            case ex => ScalaPlugin.plugin.logError("Error creating override indicators for %s".format(scu.file.path), ex)
           }
         case _ =>
       }
-  
+
       super.traverse(tree)
     }
   }

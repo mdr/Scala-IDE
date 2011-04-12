@@ -9,7 +9,7 @@ import java.net.{ MalformedURLException, URL }
 
 import org.eclipse.jface.resource.ImageDescriptor
 
-object ScalaImages  {
+object ScalaImages {
   val MISSING_ICON = ImageDescriptor.getMissingImageDescriptor
 
   val SCALA_FILE = create("icons/full/obj16/scu_obj.gif")
@@ -23,23 +23,23 @@ object ScalaImages  {
   val PUBLIC_DEF = create("icons/full/obj16/defpub_obj.gif")
   val PRIVATE_DEF = create("icons/full/obj16/defpri_obj.gif")
   val PROTECTED_DEF = create("icons/full/obj16/defpro_obj.gif")
-  
+
   val PUBLIC_VAL = create("icons/full/obj16/valpub_obj.gif")
   val PROTECTED_VAL = create("icons/full/obj16/valpro_obj.gif")
   val PRIVATE_VAL = create("icons/full/obj16/valpri_obj.gif")
 
   val SCALA_TYPE = create("icons/full/obj16/typevariable_obj.gif")
-  
+
   val SCALA_PROJECT_WIZARD = create("icons/full/wizban/newsprj_wiz.png")
-  
-  private def create(localPath : String) = {
+
+  private def create(localPath: String) = {
     try {
-      val pluginInstallURL : URL = ScalaPlugin.plugin.getBundle.getEntry("/")
+      val pluginInstallURL: URL = ScalaPlugin.plugin.getBundle.getEntry("/")
       val url = new URL(pluginInstallURL, localPath)
       ImageDescriptor.createFromURL(url)
     } catch {
-      case _ : MalformedURLException =>
+      case _: MalformedURLException =>
         ScalaImages.MISSING_ICON
-    }    
+    }
   }
 }

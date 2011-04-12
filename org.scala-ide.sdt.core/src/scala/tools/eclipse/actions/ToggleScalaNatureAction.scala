@@ -18,13 +18,13 @@ object ToggleScalaNatureAction {
   val PDE_BUNDLE_NAME = "org.eclipse.pde.ui"
 }
 
-class ToggleScalaNatureAction extends AbstractPopupAction {  
+class ToggleScalaNatureAction extends AbstractPopupAction {
   import ToggleScalaNatureAction._
-  
+
   override def performAction(project: IProject) {
     toggleScalaNature(project)
   }
-  
+
   private def toggleScalaNature(project: IProject) =
     plugin check {
       if (project.hasNature(plugin.natureId) || project.hasNature(plugin.oldNatureId)) {

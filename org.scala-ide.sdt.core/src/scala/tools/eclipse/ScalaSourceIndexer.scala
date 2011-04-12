@@ -14,12 +14,12 @@ import scala.tools.eclipse.javaelements.ScalaSourceFile
 import scala.tools.eclipse.contribution.weaving.jdt.indexerprovider.IIndexerFactory
 
 class ScalaSourceIndexerFactory extends IIndexerFactory {
-  override def createIndexer(document : SearchDocument) = new ScalaSourceIndexer(document);
+  override def createIndexer(document: SearchDocument) = new ScalaSourceIndexer(document);
 }
 
-class ScalaSourceIndexer(document : SearchDocument) extends AbstractIndexer(document) {
+class ScalaSourceIndexer(document: SearchDocument) extends AbstractIndexer(document) {
   override def indexDocument() {
-    println("Indexing document: "+document.getPath)
+    println("Indexing document: " + document.getPath)
     ScalaSourceFile.createFromPath(document.getPath).map(_.addToIndexer(this))
   }
 }

@@ -17,8 +17,7 @@ class XmlCDATAScanner(val colorManager: IColorManager, val preferenceStore: IPre
 
   def setRange(document: IDocument, offset: Int, length: Int) {
     var buffer = new ListBuffer[RegionToken]
-    /**
-     * Dummy token to sit on top of the stack until the first call to nextToken() removes it
+    /** Dummy token to sit on top of the stack until the first call to nextToken() removes it
      */
     buffer += RegionToken(0, 0, getToken(DEFAULT))
     buffer += RegionToken(offset, CDATA_START.length, getToken(XML_CDATA_BORDER))

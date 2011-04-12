@@ -11,7 +11,7 @@ import org.eclipse.jdt.debug.ui.launchConfigurations._
 import org.eclipse.jdt.ui._
 
 class ApplicationTabGroup extends AbstractLaunchConfigurationTabGroup {
-  override def createTabs(dialog : ILaunchConfigurationDialog, mode : String) = {
+  override def createTabs(dialog: ILaunchConfigurationDialog, mode: String) = {
     setTabs(Array[ILaunchConfigurationTab](
       new JavaMainTab(),
       new JavaArgumentsTab(),
@@ -19,8 +19,7 @@ class ApplicationTabGroup extends AbstractLaunchConfigurationTabGroup {
       new JavaClasspathTab(),
       new SourceLookupTab(),
       new EnvironmentTab(),
-      new CommonTab()
-    ))
+      new CommonTab()))
   }
   // to fill in later
   abstract class ScalaMainTab extends AbstractLaunchConfigurationTab {

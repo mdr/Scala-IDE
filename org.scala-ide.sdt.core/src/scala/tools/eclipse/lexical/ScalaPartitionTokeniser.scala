@@ -163,9 +163,9 @@ class ScalaPartitionTokeniser(text: String) extends TokenTests {
   @tailrec
   private def getStringLit(): Unit =
     (ch: @switch) match {
-      case '"' => accept()
-      case EOF =>
-      case '\n' => accept()
+      case '"'                   => accept()
+      case EOF                   =>
+      case '\n'                  => accept()
       case '\r' if ch(1) != '\n' =>
       case '\\' if ch(1) == '"' || ch(1) == '\\' =>
         accept(2)
@@ -178,9 +178,9 @@ class ScalaPartitionTokeniser(text: String) extends TokenTests {
   @tailrec
   private def getBackQuotedIdent(): Unit =
     (ch: @switch) match {
-      case '`' => accept()
-      case EOF =>
-      case '\n' => accept()
+      case '`'                   => accept()
+      case EOF                   =>
+      case '\n'                  => accept()
       case '\r' if ch(1) != '\n' =>
       case _ =>
         accept()
@@ -204,7 +204,7 @@ class ScalaPartitionTokeniser(text: String) extends TokenTests {
   @tailrec
   private def getOrdinaryScala(): Unit =
     (ch: @switch) match {
-      case EOF | '"' | '`' =>
+      case EOF | '"' | '`'                    =>
       case '\'' if scanForCharLit().isDefined =>
       case '/' =>
         (ch(1): @switch) match {
@@ -367,10 +367,9 @@ class ScalaPartitionTokeniser(text: String) extends TokenTests {
         getXmlCharData()
     }
 
-  /**
-   * Read an Xml tag, or part of one up to a Scala escape.
-   * @return nesting alteration (0, 1 or -1) showing the change to the depth of XML tag nesting,
-   * and whether the tag scanning was interrupted by embedded Scala.
+  /** Read an Xml tag, or part of one up to a Scala escape.
+   *  @return nesting alteration (0, 1 or -1) showing the change to the depth of XML tag nesting,
+   *  and whether the tag scanning was interrupted by embedded Scala.
    */
   @tailrec
   private def getXmlTag(isEndTag: Boolean): (Int, Boolean) =

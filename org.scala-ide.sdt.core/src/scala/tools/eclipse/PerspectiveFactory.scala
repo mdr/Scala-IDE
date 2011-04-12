@@ -15,13 +15,13 @@ import org.eclipse.ui.internal.{ PerspectiveBarContributionItem, WorkbenchWindow
 import org.eclipse.ui.navigator.resources.ProjectExplorer
 
 class PerspectiveFactory extends IPerspectiveFactory {
-  def createInitialLayout(layout : IPageLayout) = {
+  def createInitialLayout(layout: IPageLayout) = {
     createFolders(layout)
     addShortcuts(layout)
     layout.addActionSet(IDebugUIConstants.LAUNCH_ACTION_SET)
     layout.addActionSet(JavaUI.ID_ACTION_SET)
   }
-  private def addShortcuts(layout : IPageLayout) = {
+  private def addShortcuts(layout: IPageLayout) = {
     layout.addNewWizardShortcut(ScalaPlugin.plugin.projectWizId)
     layout.addNewWizardShortcut(ScalaPlugin.plugin.netProjectWizId)
     layout.addNewWizardShortcut("org.eclipse.jdt.ui.wizards.NewPackageCreationWizard")
@@ -31,16 +31,16 @@ class PerspectiveFactory extends IPerspectiveFactory {
     layout.addNewWizardShortcut(ScalaPlugin.plugin.applicationWizId)
     layout.addNewWizardShortcut("org.eclipse.ui.wizards.new.folder")
     layout.addNewWizardShortcut("org.eclipse.ui.wizards.new.file")
-    
+
     layout.addShowViewShortcut(IPageLayout.ID_RES_NAV)
     layout.addShowViewShortcut(ProjectExplorer.VIEW_ID)
     layout.addShowViewShortcut(IPageLayout.ID_OUTLINE)
     layout.addShowViewShortcut("org.eclipse.pde.runtime.LogView")
-    	            
+
   }
-  private def createFolders(layout : IPageLayout) = {
+  private def createFolders(layout: IPageLayout) = {
     val editorArea = layout.getEditorArea()
-    
+
     val explorerFolder = layout.createFolder("explorer", IPageLayout.LEFT, 0.25f, editorArea)
     explorerFolder.addView(JavaUI.ID_PACKAGES)
 
@@ -50,8 +50,8 @@ class PerspectiveFactory extends IPerspectiveFactory {
     problemsFolder.addView(IConsoleConstants.ID_CONSOLE_VIEW)
     problemsFolder.addView("org.eclipse.pde.runtime.LogView")
 
-    val outlineFolder = layout.createFolder("right", IPageLayout.RIGHT,0.75f,editorArea)
-    outlineFolder.addView(IPageLayout.ID_OUTLINE)  
+    val outlineFolder = layout.createFolder("right", IPageLayout.RIGHT, 0.75f, editorArea)
+    outlineFolder.addView(IPageLayout.ID_OUTLINE)
   }
 }
 
@@ -72,18 +72,19 @@ object PerspectiveFactory {
     val workbench = PlatformUI.getWorkbench
     val activeWindow = workbench.getActiveWorkbenchWindow.asInstanceOf[WorkbenchWindow]
     if (activeWindow != null) {
-      val perspectiveBar = activeWindow.getPerspectiveBar 
+      val perspectiveBar = activeWindow.getPerspectiveBar
       perspectiveBar.find(oldId) match {
-        case item : PerspectiveBarContributionItem =>
+        case item: PerspectiveBarContributionItem =>
           val perspectiveDesc = workbench.getPerspectiveRegistry.findPerspectiveWithId(PerspectiveFactory.id)
           if (perspectiveDesc != null) {
             item.update(perspectiveDesc)
-            Display.getDefault.asyncExec(new Runnable { def run {
-              val activeWindow = workbench.getActiveWorkbenchWindow
-              workbench.showPerspective(PerspectiveFactory.id, activeWindow)
-            }})
-          }
-          else
+            Display.getDefault.asyncExec(new Runnable {
+              def run {
+                val activeWindow = workbench.getActiveWorkbenchWindow
+                workbench.showPerspective(PerspectiveFactory.id, activeWindow)
+              }
+            })
+          } else
             perspectiveBar.remove(item)
         case _ =>
       }

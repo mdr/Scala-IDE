@@ -66,7 +66,7 @@ class FormatterPreferencePage extends PropertyPage with IWorkbenchPreferencePage
     val keys =
       for (preference <- AllPreferences.preferences)
         yield preference.preferenceType match {
-        case BooleanPreference => new OverlayKey(BOOLEAN, preference.eclipseKey)
+        case BooleanPreference       => new OverlayKey(BOOLEAN, preference.eclipseKey)
         case IntegerPreference(_, _) => new OverlayKey(INT, preference.eclipseKey)
       }
     val overlayStore = new OverlayPreferenceStore(getPreferenceStore, keys.toArray)
@@ -123,7 +123,7 @@ class FormatterPreferencePage extends PropertyPage with IWorkbenchPreferencePage
       def validateNumber(s: String) =
         try Integer.parseInt(s) match {
           case n if n < min || n > max => None
-          case n => Some(n)
+          case n                       => Some(n)
         } catch {
           case _: NumberFormatException => None
         }
@@ -217,9 +217,9 @@ class FormatterPreferencePage extends PropertyPage with IWorkbenchPreferencePage
     val pluginId = ScalaPlugin.plugin.pluginId
     val scalaPrefStore = ScalaPlugin.plugin.getPreferenceStore
     setPreferenceStore(getElement match {
-      case project: IProject => new PropertyStore(project, scalaPrefStore, pluginId)
+      case project: IProject     => new PropertyStore(project, scalaPrefStore, pluginId)
       case project: IJavaProject => new PropertyStore(project.getProject, scalaPrefStore, pluginId)
-      case _ => scalaPrefStore
+      case _                     => scalaPrefStore
     })
   }
 

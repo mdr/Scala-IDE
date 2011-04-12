@@ -17,8 +17,7 @@ import org.eclipse.pde.internal.ui.IPDEUIConstants
 import org.eclipse.pde.internal.core.WorkspacePluginModelManager
 import org.eclipse.pde.internal.ui.editor.plugin.DependenciesPage
 
-/**
- * Adds or removes 'org.scala-ide.scala.library' as a required plug-in for an Eclipse plug-in project.
+/** Adds or removes 'org.scala-ide.scala.library' as a required plug-in for an Eclipse plug-in project.
  */
 object ScalaLibraryPluginDependencyUtils {
 
@@ -45,7 +44,7 @@ object ScalaLibraryPluginDependencyUtils {
 
     manifestEditor.doSave(new NullProgressMonitor)
     if (!alreadyOpen)
-      getWorkbenchPage.closeEditor(manifestEditor,/* save = */false)
+      getWorkbenchPage.closeEditor(manifestEditor, /* save = */ false)
   }
 
   private def getWorkbenchPage = PlatformUI.getWorkbench.getActiveWorkbenchWindow.getActivePage

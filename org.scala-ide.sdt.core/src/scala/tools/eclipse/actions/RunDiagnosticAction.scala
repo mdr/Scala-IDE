@@ -10,31 +10,31 @@ import scala.tools.eclipse.javaelements.JDTUtils
 
 class RunDiagnosticAction extends IObjectActionDelegate with IWorkbenchWindowActionDelegate {
   private var parentWindow: IWorkbenchWindow = null
-	
+
   val RUN_DIAGNOSTICS = "org.scala-ide.sdt.ui.runDiag.action"
-  val REPORT_BUG      = "org.scala-ide.sdt.ui.reportBug.action"
-  
-  override def init(window: IWorkbenchWindow) {  
+  val REPORT_BUG = "org.scala-ide.sdt.ui.reportBug.action"
+
+  override def init(window: IWorkbenchWindow) {
     parentWindow = window
-  } 
-  
-  def dispose = { }
-  
-	def selectionChanged(action: IAction, selection: ISelection) {  }
-  
-  def run(action: IAction) { 
+  }
+
+  def dispose = {}
+
+  def selectionChanged(action: IAction, selection: ISelection) {}
+
+  def run(action: IAction) {
     plugin check {
       action.getId match {
         case RUN_DIAGNOSTICS =>
-          val shell = if (parentWindow == null) ScalaPlugin.getShell else parentWindow.getShell        
+          val shell = if (parentWindow == null) ScalaPlugin.getShell else parentWindow.getShell
           new diagnostic.DiagnosticDialog(shell).open
         case REPORT_BUG =>
           val shell = if (parentWindow == null) ScalaPlugin.getShell else parentWindow.getShell
           new diagnostic.ReportBugDialog(shell).open
-        case _ => 
+        case _ =>
       }
     }
   }
-    
-  def setActivePart(action: IAction, targetPart: IWorkbenchPart) { }
+
+  def setActivePart(action: IAction, targetPart: IWorkbenchPart) {}
 }

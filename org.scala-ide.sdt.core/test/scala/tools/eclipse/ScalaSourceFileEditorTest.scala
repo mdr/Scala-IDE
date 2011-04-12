@@ -10,21 +10,21 @@ import org.junit.Assert._
 import org.eclipse.core.resources.IWorkspace;
 
 class ScalaSourceFileEditorTest {
-  var scalaProject : ScalaProject = null;
-  var compilationUnit : ICompilationUnit = null;
-  var workspace : IWorkspace = null;
-  val sourceCode = new StringBuffer(); 
+  var scalaProject: ScalaProject = null;
+  var compilationUnit: ICompilationUnit = null;
+  var workspace: IWorkspace = null;
+  val sourceCode = new StringBuffer();
   val eclipseInstance = new EclipseUserSimulator;
-  
+
   @Before
   def initialise() {
-	import eclipseInstance._
-	
-    scalaProject = createProjectInWorkspace("test_project");	
-	val pack = createPackage("test.top_level");
-    
+    import eclipseInstance._
+
+    scalaProject = createProjectInWorkspace("test_project");
+    val pack = createPackage("test.top_level");
+
     sourceCode.append(
-    """
+      """
        package test.top_level; 
        class AClass { 
     	 var a = 1; 

@@ -66,14 +66,14 @@ class ScalaSelectionEngine(nameEnvironment: SearchableEnvironment, requestor: IS
 
       def qual(tree: compiler.Tree): Tree = tree.symbol.info match {
         case compiler.analyzer.ImportType(expr) => expr
-        case _ => tree
+        case _                                  => tree
       }
 
       /** Delay the action. Necessary so that the payload is run outside of 'ask'. */
       class Cont(f: () => Unit) {
         def apply() = f()
       }
-      
+
       object Cont {
         def apply(next: => Unit) = new Cont({ () => next })
         val Noop = new Cont(() => ())
@@ -188,7 +188,7 @@ class ScalaSelectionEngine(nameEnvironment: SearchableEnvironment, requestor: IS
           case Some(tree) => {
             tree match {
               case i: compiler.Ident => i.symbol match {
-                case c: compiler.ClassSymbol => acceptType(c)
+                case c: compiler.ClassSymbol  => acceptType(c)
                 case m: compiler.ModuleSymbol => acceptType(m)
                 case t: compiler.TermSymbol if t.pos.isDefined =>
                   if (t.isMethod) acceptMethod(t) else if (t.isLocal) acceptLocalDefinition(t) else acceptField(t)
@@ -220,10 +220,10 @@ class ScalaSelectionEngine(nameEnvironment: SearchableEnvironment, requestor: IS
                 } else
                   acceptMethod(sym)
 
-              case a@compiler.Annotated(atp, _) =>
+              case a @ compiler.Annotated(atp, _) =>
                 acceptTypeWithFlags(atp.symbol, ClassFileConstants.AccAnnotation)
 
-              case i@compiler.Import(expr, selectors) =>
+              case i @ compiler.Import(expr, selectors) =>
                 def acceptSymbol(sym: compiler.Symbol) {
                   sym match {
                     case c: compiler.ClassSymbol =>
@@ -247,7 +247,7 @@ class ScalaSelectionEngine(nameEnvironment: SearchableEnvironment, requestor: IS
                 if (q.pos overlaps pos) {
                   def findInSelect(t: compiler.Tree): Tree = t match {
                     case Select(qual, _) if qual.pos.overlaps(pos) => findInSelect(qual)
-                    case _ => t
+                    case _                                         => t
                   }
                   val tree = findInSelect(q)
                   val sym = tree.symbol
@@ -258,14 +258,14 @@ class ScalaSelectionEngine(nameEnvironment: SearchableEnvironment, requestor: IS
                       val base = compiler.typer.typedQualifier(q).tpe
                       val sym0 = base.member(name) match {
                         case NoSymbol => base.member(name.toTypeName)
-                        case s => s
+                        case s        => s
                       }
                       val syms = if (sym0.hasFlag(Flags.OVERLOADED)) sym0.alternatives else List(sym0)
                       syms.map(acceptSymbol)
                     case _ =>
                   }
 
-              case l@(_: ValDef | _: Bind | _: ClassDef | _: ModuleDef | _: TypeDef | _: DefDef) =>
+              case l @ (_: ValDef | _: Bind | _: ClassDef | _: ModuleDef | _: TypeDef | _: DefDef) =>
                 val sym = l.symbol
                 if (sym.isLocal)
                   acceptLocalDefinition(l.symbol)

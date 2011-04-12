@@ -28,20 +28,20 @@ object ScalaClassFileDescriber {
   final val CONSTANT_INTFMETHODREF = 11
   final val CONSTANT_NAMEANDTYPE = 12
 
-  def isScala(contents : InputStream) : Option[String] = {
+  def isScala(contents: InputStream): Option[String] = {
     try {
       val in = new DataInputStream(contents)
-      
+
       if (in.readInt() != JAVA_MAGIC)
         return None
       if (in.skipBytes(4) != 4)
         return None
-  
-      var sourceFile : String = null
+
+      var sourceFile: String = null
       var isScala = false
-      
+
       val pool = new HashMap[Int, String]
-      
+
       val poolSize = in.readUnsignedShort
       var scalaSigIndex = -1
       var scalaIndex = -1
@@ -60,14 +60,14 @@ object ScalaClassFileDescriber {
               else if (sourceFileIndex == -1 && str == "SourceFile")
                 sourceFileIndex = i
             }
-          case CONSTANT_UTF8 | CONSTANT_UNICODE => 
+          case CONSTANT_UTF8 | CONSTANT_UNICODE =>
             val toSkip = in.readUnsignedShort()
             if (in.skipBytes(toSkip) != toSkip) return None
           case CONSTANT_CLASS | CONSTANT_STRING =>
             if (in.skipBytes(2) != 2) return None
           case CONSTANT_FIELDREF | CONSTANT_METHODREF | CONSTANT_INTFMETHODREF
-             | CONSTANT_NAMEANDTYPE | CONSTANT_INTEGER | CONSTANT_FLOAT =>
-            if (in.skipBytes(4) != 4) return None 
+            | CONSTANT_NAMEANDTYPE | CONSTANT_INTEGER | CONSTANT_FLOAT =>
+            if (in.skipBytes(4) != 4) return None
           case CONSTANT_LONG | CONSTANT_DOUBLE =>
             if (in.skipBytes(8) != 8) return None
             i += 1
@@ -76,19 +76,19 @@ object ScalaClassFileDescriber {
         }
         i += 1
       }
-      
+
       if (scalaIndex == -1 && scalaSigIndex == -1)
         return None
-        
+
       if (in.skipBytes(6) != 6)
         return None
-      
+
       val numInterfaces = in.readUnsignedShort()
-      val iToSkip = numInterfaces*2
+      val iToSkip = numInterfaces * 2
       if (in.skipBytes(iToSkip) != iToSkip)
         return None
-      
-      def skipFieldsOrMethods() : Boolean = {
+
+      def skipFieldsOrMethods(): Boolean = {
         val num = in.readUnsignedShort()
         var i = 0
         while (i < num) {
@@ -109,12 +109,12 @@ object ScalaClassFileDescriber {
         }
         true
       }
-  
+
       if (!skipFieldsOrMethods())
         return None
       if (!skipFieldsOrMethods())
         return None
-      
+
       val numAttributes = in.readUnsignedShort()
       var j = 0
       while (j < numAttributes) {
@@ -137,7 +137,7 @@ object ScalaClassFileDescriber {
       }
       None
     } catch {
-      case ex : IOException => None
+      case ex: IOException => None
     }
   }
 }
@@ -146,8 +146,8 @@ class ScalaClassFileDescriber extends IContentDescriber {
   import IContentDescriber.{ INVALID, VALID }
   import ScalaClassFileDescriber._
 
-  override def describe(contents : InputStream, description : IContentDescription) : Int =
+  override def describe(contents: InputStream, description: IContentDescription): Int =
     if (isScala(contents).isDefined) VALID else INVALID
 
-  override def getSupportedOptions : Array[QualifiedName] = new Array[QualifiedName](0)
+  override def getSupportedOptions: Array[QualifiedName] = new Array[QualifiedName](0)
 }

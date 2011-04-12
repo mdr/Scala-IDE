@@ -36,8 +36,8 @@ class ScalaProject(val underlying: IProject) {
   private var resetPending = false
 
   case class InvalidCompilerSettings() extends RuntimeException(
-        "Scala compiler cannot initialize for project: " + underlying.getName +
-    		". Please check that your classpath contains the standard Scala library.")
+    "Scala compiler cannot initialize for project: " + underlying.getName +
+      ". Please check that your classpath contains the standard Scala library.")
 
   private val presentationCompiler = new Cached[Option[ScalaPresentationCompiler]] {
     override def create() = {
@@ -56,7 +56,7 @@ class ScalaProject(val underlying: IProject) {
           println("Throwable when intializing presentation compiler!!! " + ex.getMessage)
           if (underlying.isOpen)
             failedCompilerInitialization("error initializing Scala compiler")
-          plugin.logError(ex)          
+          plugin.logError(ex)
           None
       }
     }
@@ -67,18 +67,18 @@ class ScalaProject(val underlying: IProject) {
   }
 
   private var messageShowed = false
-  
+
   private def failedCompilerInitialization(msg: String) {
     import org.eclipse.jface.dialogs.MessageDialog
     synchronized {
       if (!messageShowed) {
         messageShowed = true
-        Display.getDefault asyncExec new Runnable { 
+        Display.getDefault asyncExec new Runnable {
           def run() {
-            val doAdd = MessageDialog.openQuestion(ScalaPlugin.getShell, "Add Scala library to project classpath?", 
-                ("There was an error initializing the Scala compiler: %s. \n\n"+
-                 "The editor compiler will be restarted when the project is cleaned or the classpath is changed.\n\n" + 
-                 "Add the Scala library to the classpath of project %s?") 
+            val doAdd = MessageDialog.openQuestion(ScalaPlugin.getShell, "Add Scala library to project classpath?",
+              ("There was an error initializing the Scala compiler: %s. \n\n" +
+                "The editor compiler will be restarted when the project is cleaned or the classpath is changed.\n\n" +
+                "Add the Scala library to the classpath of project %s?")
                 .format(msg, underlying.getName))
             if (doAdd) {
               plugin check {
@@ -101,7 +101,7 @@ class ScalaProject(val underlying: IProject) {
         val string = msg.map {
           case '\n' => ' '
           case '\r' => ' '
-          case c => c
+          case c    => c
         }.mkString("", "", "")
         mrk.setAttribute(IMarker.MESSAGE, msg)
       }
@@ -146,8 +146,10 @@ class ScalaProject(val underlying: IProject) {
     def computeClasspath(project: IJavaProject, exportedOnly: Boolean): Unit = {
       val cpes = project.getResolvedClasspath(true)
 
-      for (cpe <- cpes if !exportedOnly || cpe.isExported ||
-    		            cpe.getEntryKind == IClasspathEntry.CPE_SOURCE) cpe.getEntryKind match {
+      for (
+        cpe <- cpes if !exportedOnly || cpe.isExported ||
+          cpe.getEntryKind == IClasspathEntry.CPE_SOURCE
+      ) cpe.getEntryKind match {
         case IClasspathEntry.CPE_PROJECT =>
           val depProject = plugin.workspaceRoot.getProject(cpe.getPath.lastSegment)
           if (JavaProject.hasJavaNature(depProject)) {
@@ -164,12 +166,12 @@ class ScalaProject(val underlying: IProject) {
         case IClasspathEntry.CPE_SOURCE =>
           val cpeOutput = cpe.getOutputLocation
           val outputLocation = if (cpeOutput != null) cpeOutput else project.getOutputLocation
-              
+
           if (outputLocation != null) {
             val absPath = plugin.workspaceRoot.findMember(outputLocation)
-            if (absPath != null) 
+            if (absPath != null)
               path += absPath.getLocation
-          }  
+          }
 
         case _ =>
       }
@@ -309,7 +311,7 @@ class ScalaProject(val underlying: IProject) {
     val resource = plugin.workspaceRoot.findMember(outputLocation)
     resource match {
       case container: IContainer => delete(container, container != javaProject.getProject)(_.endsWith(".class"))
-      case _ =>
+      case _                     =>
     }
   }
 
@@ -321,7 +323,7 @@ class ScalaProject(val underlying: IProject) {
     val cp = underlying.getFile(".classpath")
     if (cp.exists)
       classpathUpdate match {
-        case IResource.NULL_STAMP => classpathUpdate = cp.getModificationStamp()
+        case IResource.NULL_STAMP                        => classpathUpdate = cp.getModificationStamp()
         case stamp if stamp == cp.getModificationStamp() =>
         case _ =>
           classpathUpdate = cp.getModificationStamp()
@@ -347,7 +349,7 @@ class ScalaProject(val underlying: IProject) {
       val path = sfs.iterator.next
       plugin.workspaceRoot.findContainersForLocation(path) match {
         case Array(container) => settings.encoding.value = container.getDefaultCharset
-        case _ =>
+        case _                =>
       }
     }
 
@@ -375,10 +377,10 @@ class ScalaProject(val underlying: IProject) {
       }
     }
   }
-  
+
   private def buildManagerInitialize: String =
     storage.getString(SettingConverterUtil.convertNameToProperty(util.ScalaPluginSettings.buildManager.name))
-  
+
   private def storage = {
     val workspaceStore = ScalaPlugin.plugin.getPreferenceStore
     val projectStore = new PropertyStore(underlying, workspaceStore, plugin.pluginId)
@@ -396,41 +398,39 @@ class ScalaProject(val underlying: IProject) {
       sourceFolders.exists(_ == sourceFolderPath)
     }
   }
-  
-  /**
-   * Performs `op` on the presentation compiler, if the compiler has been initialized. 
-   * Otherwise, do nothing (no exception thrown).
+
+  /** Performs `op` on the presentation compiler, if the compiler has been initialized.
+   *  Otherwise, do nothing (no exception thrown).
    */
   def doWithPresentationCompiler(op: ScalaPresentationCompiler => Unit): Unit = {
     presentationCompiler {
       case Some(c) => op(c)
-      case None =>
+      case None    =>
     }
   }
-  
-  def defaultOrElse[T]: T = {  
+
+  def defaultOrElse[T]: T = {
     if (underlying.isOpen)
       failedCompilerInitialization("")
-    
-    throw InvalidCompilerSettings() 
+
+    throw InvalidCompilerSettings()
   }
 
-  /** 
-   * If the presentation compiler has failed to initialize and no `orElse` is specified, 
-   * the default handler throws an `InvalidCompilerSettings` exception
-   * If T = Unit, then doWithPresentationCompiler can be used, which does not throw.
+  /** If the presentation compiler has failed to initialize and no `orElse` is specified,
+   *  the default handler throws an `InvalidCompilerSettings` exception
+   *  If T = Unit, then doWithPresentationCompiler can be used, which does not throw.
    */
   def withPresentationCompiler[T](op: ScalaPresentationCompiler => T)(orElse: => T = defaultOrElse): T = {
     presentationCompiler {
       case Some(c) => op(c)
-      case None => orElse
+      case None    => orElse
     }
   }
 
   def withSourceFile[T](scu: ScalaCompilationUnit)(op: (SourceFile, ScalaPresentationCompiler) => T)(orElse: => T = defaultOrElse): T = {
     withPresentationCompiler { compiler =>
       compiler.withSourceFile(scu)(op)
-    } {orElse}
+    } { orElse }
   }
 
   def resetPresentationCompiler {
@@ -448,20 +448,20 @@ class ScalaProject(val underlying: IProject) {
       // causes problems if errors are reported against that file. Anyway, it's wrong to have a sourcepath
       // when using the build manager.
       settings.sourcepath.value = ""
-      	
+
       // Which build manager?
       // We assume that build manager setting has only single box
       val choice = buildManagerInitialize
       choice match {
-      	case "refined" =>
-      	  println("BM: Refined Build Manager")
-      	  buildManager0 = new buildmanager.refined.EclipseRefinedBuildManager(this, settings)
-      	case "sbt0.9"  =>
-      	  println("BM: SBT 0.9 enhanced Build Manager")
-      	  buildManager0 = new buildmanager.sbtintegration.EclipseSbtBuildManager(this, settings)
-      	case _         =>
-      	  println("Invalid build manager choice '" + choice  + "'. Setting to (default) refined build manager")
-      	  buildManager0 = new buildmanager.refined.EclipseRefinedBuildManager(this, settings)
+        case "refined" =>
+          println("BM: Refined Build Manager")
+          buildManager0 = new buildmanager.refined.EclipseRefinedBuildManager(this, settings)
+        case "sbt0.9" =>
+          println("BM: SBT 0.9 enhanced Build Manager")
+          buildManager0 = new buildmanager.sbtintegration.EclipseSbtBuildManager(this, settings)
+        case _ =>
+          println("Invalid build manager choice '" + choice + "'. Setting to (default) refined build manager")
+          buildManager0 = new buildmanager.refined.EclipseRefinedBuildManager(this, settings)
       }
 
       //buildManager0 = new EclipseBuildManager(this, settings)
@@ -492,8 +492,8 @@ class ScalaProject(val underlying: IProject) {
   }
 
   def resetBuildCompiler(implicit monitor: IProgressMonitor) {
-  	if (buildManager0 != null)
-  		buildManager0.clean(monitor)
+    if (buildManager0 != null)
+      buildManager0.clean(monitor)
     buildManager0 = null
     hasBeenBuilt = false
   }

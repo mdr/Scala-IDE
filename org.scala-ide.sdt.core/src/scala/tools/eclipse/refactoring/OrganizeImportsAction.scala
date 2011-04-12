@@ -23,19 +23,19 @@ import scala.tools.eclipse.javaelements.ScalaSourceFile
 import scala.tools.eclipse.ScalaPresentationCompiler
 
 class OrganizeImportsAction extends RefactoringAction {
-  
+
   class OrganizeImportsScalaIdeRefactoring(file: ScalaSourceFile) extends ScalaIdeRefactoring("Organize Imports") {
-                  
+
     val refactoring = file.withSourceFile((_, compiler) => new OrganizeImports {
       val global = compiler
-    }) ()
-            
+    })()
+
     lazy val selection = createSelection(file, 0, 0)
-    
+
     def initialCheck = refactoring.prepare(selection)
-    
-    def refactoringParameters = new refactoring.RefactoringParameters    
+
+    def refactoringParameters = new refactoring.RefactoringParameters
   }
-  
+
   def createRefactoring(selectionStart: Int, selectionEnd: Int, file: ScalaSourceFile) = Some(new OrganizeImportsScalaIdeRefactoring(file))
 }

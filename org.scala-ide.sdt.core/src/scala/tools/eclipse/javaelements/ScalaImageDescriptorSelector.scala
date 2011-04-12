@@ -7,20 +7,20 @@ import org.eclipse.jface.resource.ImageDescriptor;
 
 class ScalaImageDescriptorSelector extends IImageDescriptorSelector {
 
-  def getTypeImageDescriptor(isInner : Boolean, isInInterfaceOrAnnotation : Boolean, flags : Int, useLightIcons : Boolean, element : AnyRef) : ImageDescriptor =
-  try {
-    element match {
-      case se : ScalaElement => se.getImageDescriptor
-      case _ => null
+  def getTypeImageDescriptor(isInner: Boolean, isInInterfaceOrAnnotation: Boolean, flags: Int, useLightIcons: Boolean, element: AnyRef): ImageDescriptor =
+    try {
+      element match {
+        case se: ScalaElement => se.getImageDescriptor
+        case _                => null
+      }
+    } catch {
+      case _: JavaModelException => null
     }
-  } catch {
-    case _ : JavaModelException => null
-  }
-    
-  def createCompletionProposalImageDescriptor(proposal : LazyJavaCompletionProposal) : ImageDescriptor = {
+
+  def createCompletionProposalImageDescriptor(proposal: LazyJavaCompletionProposal): ImageDescriptor = {
     proposal.getJavaElement match {
-      case se : ScalaElement => se.getImageDescriptor
-      case _ => null
+      case se: ScalaElement => se.getImageDescriptor
+      case _                => null
     }
-  } 
+  }
 }

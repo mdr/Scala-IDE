@@ -5,8 +5,7 @@ import org.eclipse.jface.action.{ Action, AbstractAction, IAction }
 import org.eclipse.jface.util.IPropertyChangeListener
 import scala.tools.eclipse.refactoring.ActionAdapter
 
-/**
- * Dummy noop action for now to suppress errors (see ticket #2961) -- but see ImportCompletionProposal
+/** Dummy noop action for now to suppress errors (see ticket #2961) -- but see ImportCompletionProposal
  */
 class AddImportAction extends ActionAdapter {
 

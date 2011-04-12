@@ -19,7 +19,7 @@ import org.eclipse.jdt.internal.corext.util.Messages
 import org.eclipse.core.runtime.IStatus
 import org.eclipse.contribution.jdt.preferences.{ WeavingStateConfigurer, WeavingStateConfigurerUI, JDTWeavingPreferences }
 import org.eclipse.ui.PlatformUI
-import org.eclipse.ui.browser.IWorkbenchBrowserSupport 
+import org.eclipse.ui.browser.IWorkbenchBrowserSupport
 
 class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
 
@@ -31,69 +31,69 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
            1) save all values
            2) "use other settings" is enabled.
   */
-  
+
   protected val configurer = new WeavingStateConfigurer
-  
+
   val heapSize = Runtime.getRuntime.maxMemory / (1024 * 1024)
   val recommendedHeap = 1024
-  
+
   protected val prefStore: IPreferenceStore = PreferenceConstants.getPreferenceStore
-  
+
   // keep track of whether we are programmatically updating a field, in which case the listeners ignore the event
   // a horrible hack, but I think the only alternative is to use the (heavyweight) jface data binding mechanism -DM
-  protected var updating = false 
-  
+  protected var updating = false
+
   protected var errorMessageField: Text = null
   protected var weavingButton: Button = null
   protected var scalaSettingsButton: Button = null // radio button
   protected var otherSettingsButton: Button = null // radio button
   protected var autoActivationButton: Button = null
   protected var delayText: Text = null
-  
+
   protected var boldFont: Font = null
-    
-//  protected val markOccurrencesData = new BoolWidgetData(PreferenceConstants.EDITOR_MARK_OCCURRENCES, false)
-  protected val completionData = new BoolWidgetData("", true) {      
+
+  //  protected val markOccurrencesData = new BoolWidgetData(PreferenceConstants.EDITOR_MARK_OCCURRENCES, false)
+  protected val completionData = new BoolWidgetData("", true) {
     val mylynCompletion = "org.eclipse.mylyn.java.ui.javaAllProposalCategory"
     val javaCompletion = "org.eclipse.jdt.ui.javaAllProposalCategory"
-      
+
     value = getStoredValue // initialize from preference store
-    
+
     def getStoredValue: Boolean = {
       val currentExcluded: Array[String] = PreferenceConstants.getExcludedCompletionProposalCategories
       currentExcluded.contains(mylynCompletion) && !currentExcluded.contains(javaCompletion)
     }
-    
+
     val defaultExcluded = Array(
-        mylynCompletion,
-        "org.eclipse.jdt.ui.javaNoTypeProposalCategory",
-        "org.eclipse.jdt.ui.javaTypeProposalCategory",
-        "org.eclipse.jdt.ui.swtProposalCategory",
-        "org.eclipse.pde.api.tools.ui.apitools_proposal_category",
-        "org.eclipse.jdt.ui.templateProposalCategory")
-        
+      mylynCompletion,
+      "org.eclipse.jdt.ui.javaNoTypeProposalCategory",
+      "org.eclipse.jdt.ui.javaTypeProposalCategory",
+      "org.eclipse.jdt.ui.swtProposalCategory",
+      "org.eclipse.pde.api.tools.ui.apitools_proposal_category",
+      "org.eclipse.jdt.ui.templateProposalCategory")
+
     val defaultOrdering = List(
-        javaCompletion + ":0", 
-        mylynCompletion + ":65542",
-        "org.eclipse.jdt.ui.templateProposalCategory:1", 
-        "org.eclipse.jdt.ui.javaTypeProposalCategory:65537", 
-        "org.eclipse.jdt.ui.javaNoTypeProposalCategory:65538", 
-        "org.eclipse.jdt.ui.textProposalCategory:65539", 
-        "org.eclipse.pde.api.tools.ui.apitools_proposal_category:65540", 
-        "org.eclipse.jdt.ui.swtProposalCategory:65541").mkString("\0")
-    
+      javaCompletion + ":0",
+      mylynCompletion + ":65542",
+      "org.eclipse.jdt.ui.templateProposalCategory:1",
+      "org.eclipse.jdt.ui.javaTypeProposalCategory:65537",
+      "org.eclipse.jdt.ui.javaNoTypeProposalCategory:65538",
+      "org.eclipse.jdt.ui.textProposalCategory:65539",
+      "org.eclipse.pde.api.tools.ui.apitools_proposal_category:65540",
+      "org.eclipse.jdt.ui.swtProposalCategory:65541").mkString("\0")
+
     override def saveToStore {
       if (value && !getStoredValue) {
         PreferenceConstants.setExcludedCompletionProposalCategories(defaultExcluded)
         prefStore.setValue(PreferenceConstants.CODEASSIST_CATEGORY_ORDER, defaultOrdering)
       }
     }
-  }     
+  }
   protected val autoActivationData = new BoolWidgetData(PreferenceConstants.CODEASSIST_AUTOACTIVATION, true)
   protected val activationDelayData = new IntWidgetData(PreferenceConstants.CODEASSIST_AUTOACTIVATION_DELAY, 500)
-  
+
   protected var widgetDataList: List[WidgetData] = List(completionData, autoActivationData, activationDelayData) // , markOccurrencesData
-     
+
   // helper classes for loading and storing widget values
   abstract class WidgetData {
     type T
@@ -114,24 +114,24 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
     var textWidget: Text = null // can't be initialized in the constructor because widget won't have been created yet 
     def saveToStore {
       updateValue
-      prefStore.setValue(keyName, value) 
+      prefStore.setValue(keyName, value)
     }
     def updateWidget { textWidget.setText(value.toString) }
     def updateValue {
       value = DiagnosticDialog.getIntOrError(textWidget.getText) match {
         case Left(error) => recommendedVal
-        case Right(num) => num
+        case Right(num)  => num
       }
     }
     def setToRecommended { textWidget.setText(recommendedVal.toString) }
   }
-  
+
   class BoolWidgetData(keyName: String, val recommendedVal: Boolean) extends WidgetData {
     type T = Boolean
     var value: Boolean = prefStore.getBoolean(keyName)
     var checkbox: Button = null // can't be initialized in the constructor because widget won't have been created yet
-    
-    def saveToStore = { 
+
+    def saveToStore = {
       updateValue
       prefStore.setValue(keyName, value) // code duplication is due to overloading in IPreferenceStore.setValue    
     }
@@ -140,9 +140,9 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
     def setToRecommended { checkbox.setSelection(recommendedVal) }
   }
   // end helper classes
-    
+
   protected override def isResizable = true
-    
+
   protected override def createContents(parent: Composite): Control = {
     val control = super.createContents(parent)
     doEnableDisable()
@@ -150,7 +150,7 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
     getButton(IDialogConstants.OK_ID).setFocus
     control
   }
-    
+
   protected override def createDialogArea(parent: Composite): Control = {
     val control = new Composite(parent, SWT.NONE)
     control.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true))
@@ -163,8 +163,8 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
       group.setLayout(layout)
       group
     }
-    
-    val weavingGroup = newGroup("JDT Weaving")    
+
+    val weavingGroup = newGroup("JDT Weaving")
     this.weavingButton = newCheckboxButton(weavingGroup, "Enable JDT weaving (required for Scala plugin)")
     weavingButton.setSelection(configurer.isWeaving)
     weavingButton.setEnabled(!configurer.isWeaving) // disable the control if weaving is already enabled
@@ -173,7 +173,7 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
     }
 
     // radio buttons
-    val radioGroup = newGroup("Scala JDT Settings", control)    
+    val radioGroup = newGroup("Scala JDT Settings", control)
 
     val radioButtonListener = new SelectionAdapter {
       override def widgetSelected(e: SelectionEvent) {
@@ -181,30 +181,29 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
           updating = true
           widgetDataList foreach { _.setToRecommended }
           updating = false
-        }
-        else {
+        } else {
           updating = true
           widgetDataList foreach { _.updateWidget }
           updating = false
         }
-        doEnableDisable() 
-      }    
+        doEnableDisable()
+      }
     }
-    this.scalaSettingsButton = newRadioButton(radioGroup, "Use recommended default settings", radioButtonListener)    
+    this.scalaSettingsButton = newRadioButton(radioGroup, "Use recommended default settings", radioButtonListener)
     this.otherSettingsButton = newRadioButton(radioGroup, "Use other settings", radioButtonListener)
-    
+
     // the inner controls
     val innerGroup = newGroup("", radioGroup)
     innerGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 2, 1))
 
     // Note: Mark Occurences is now working properly, so it doesn't need to be recommended to be turned off...
-//    val markOccurrencesButton = 
-//      newCheckboxButton(innerGroup, "Enable JDT \"Mark Occurrences\" (not recommended)", markOccurrencesData)
-        
-    val completionButton = 
+    //    val markOccurrencesButton = 
+    //      newCheckboxButton(innerGroup, "Enable JDT \"Mark Occurrences\" (not recommended)", markOccurrencesData)
+
+    val completionButton =
       newCheckboxButton(innerGroup, "Use Scala-compatible JDT content assist proposals (recommended)", completionData)
-    
-    this.autoActivationButton = 
+
+    this.autoActivationButton =
       newCheckboxButton(innerGroup, "Enable JDT content assist auto-activation (recommended)", autoActivationData)
 
     new Label(innerGroup, SWT.LEFT).setText("Content assist auto-activation delay (ms)")
@@ -218,9 +217,9 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
     heapGroup.setText("Heap settings")
     heapGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true))
     heapGroup.setLayout(new GridLayout(1, true))
-    
+
     new Label(heapGroup, SWT.LEFT).setText("Current maximum heap size: " + heapSize + "M")
-    
+
     if (heapSize < recommendedHeap) {
       // create the warning label 
       val warningLabel = new Label(heapGroup, SWT.LEFT)
@@ -232,87 +231,87 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
       fontData foreach { _.setStyle(SWT.BOLD) }
       this.boldFont = new Font(currentFont.getDevice, fontData)
       warningLabel.setFont(boldFont)
-      
+
       val link = new Link(heapGroup, SWT.NONE)
       link.setText(
-          "See <a href=\"http://wiki.eclipse.org/FAQ_How_do_I_increase_the_heap_size_available_to_Eclipse%3F\">" +
+        "See <a href=\"http://wiki.eclipse.org/FAQ_How_do_I_increase_the_heap_size_available_to_Eclipse%3F\">" +
           "instructions for changing heap size</a>.")
-                    
+
       link.addListener(SWT.Selection, DiagnosticDialog.linkListener)
     }
 
     val otherGroup = newGroup("Additional", control, new GridLayout(1, true))
-    
+
     val knownIssuesLink = new Link(otherGroup, SWT.NONE)
     knownIssuesLink.setText("See list of <a href=\"https://www.assembla.com/wiki/show/scala-ide/Known_Issues\">known issues</a>" +
-         " for known problems and workarounds")      
+      " for known problems and workarounds")
     knownIssuesLink.addListener(SWT.Selection, DiagnosticDialog.linkListener)
-    
+
     errorMessageField = new Text(control, SWT.READ_ONLY | SWT.WRAP)
     errorMessageField.setLayoutData(new GridData(GridData.GRAB_HORIZONTAL | GridData.HORIZONTAL_ALIGN_FILL))
     errorMessageField.setBackground(errorMessageField.getDisplay.getSystemColor(SWT.COLOR_WIDGET_BACKGROUND))
-   
+
     widgetDataList foreach { _.updateWidget }
-        
+
     // IMPORTANT: add the listeners AFTER updating the widgets. Otherwise, the listeners will be triggered when setting the 
     // widget's initial values
     val selectionListener = new SelectionAdapter {
-      override def widgetSelected(e: SelectionEvent) { 
+      override def widgetSelected(e: SelectionEvent) {
         e.getSource.asInstanceOf[Control].getData.asInstanceOf[WidgetData].updateValue
         refreshRadioButtons()
-        doEnableDisable() 
-      }    
+        doEnableDisable()
+      }
     }
-    
-//    markOccurrencesButton.addSelectionListener(selectionListener)
+
+    //    markOccurrencesButton.addSelectionListener(selectionListener)
     autoActivationButton.addSelectionListener(selectionListener)
     completionButton.addSelectionListener(selectionListener)
 
     delayText.addModifyListener(new ModifyListener {
-      def modifyText(e: ModifyEvent) { 
-        verifyNumber(delayText.getText) 
+      def modifyText(e: ModifyEvent) {
+        verifyNumber(delayText.getText)
         activationDelayData.updateValue
         refreshRadioButtons
       }
     })
-    
+
     Dialog.applyDialogFont(parent)
     control
   }
-    
+
   private def newCheckboxButton(parent: Composite, text: String): Button = {
     val button = new Button(parent, SWT.CHECK)
     button.setText(text)
     button.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true, 2, 1))
     button
   }
-  
+
   private def newCheckboxButton(parent: Composite, text: String, data: BoolWidgetData): Button = {
     val result = newCheckboxButton(parent, text)
     result.setData(data)
     data.checkbox = result
     result
   }
-  
+
   private def newRadioButton(parent: Composite, text: String, listener: SelectionListener): Button = {
     val button = new Button(parent, SWT.RADIO)
     button.setText(text)
     button.addSelectionListener(listener)
     button
   }
-  
+
   def doEnableDisable() {
-    val selected = autoActivationButton.getSelection        
+    val selected = autoActivationButton.getSelection
     if (!selected && errorMessageField.getData.asInstanceOf[Boolean]) {
       delayText.setText("")
       setErrorMessage(None) // clear the error if there was one
-    } else if (selected) { 
+    } else if (selected) {
       verifyNumber(delayText.getText)
     }
-    
+
     delayText.setEnabled(autoActivationButton.getSelection)
   }
-  
+
   def refreshRadioButtons() {
     if (!updating) {
       val isDefault = widgetDataList forall { _.isRecommendedVal }
@@ -320,14 +319,14 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
       otherSettingsButton.setSelection(!isDefault)
     }
   }
-  
+
   def verifyNumber(text: String) = {
     DiagnosticDialog.getIntOrError(text) match {
       case Left(msg) => setErrorMessage(Option(msg))
-      case _ => setErrorMessage(None)
+      case _         => setErrorMessage(None)
     }
   }
-    
+
   def setErrorMessage(msg: Option[String]) {
     if (errorMessageField != null && !errorMessageField.isDisposed) {
       errorMessageField.setText(msg.getOrElse(" \n "))
@@ -341,9 +340,9 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
       errorMessageField.getParent.update
 
       getButton(IDialogConstants.OK_ID).setEnabled(msg.isEmpty)
-    }    
+    }
   }
-  
+
   override def okPressed {
     widgetDataList foreach { _.saveToStore }
     val doEnableWeaving = weavingButton.getSelection && !configurer.isWeaving
@@ -351,35 +350,35 @@ class DiagnosticDialog(shell: Shell) extends Dialog(shell) {
     if (doEnableWeaving)
       turnWeavingOn()
   }
-  
+
   override def close: Boolean = {
-    if (boldFont != null) 
+    if (boldFont != null)
       boldFont.dispose
     super.close
   }
-  
+
   def turnWeavingOn() {
     JDTWeavingPreferences.setAskToEnableWeaving(false)
-    
-    val changeResult: IStatus = configurer.changeWeavingState(true)    
-    
+
+    val changeResult: IStatus = configurer.changeWeavingState(true)
+
     if (changeResult.getSeverity <= IStatus.WARNING) {
-      val note = 
+      val note =
         if (changeResult.getSeverity == IStatus.WARNING)
           "\n\n(Note: weaving status changed, but there were warnings. See the error log for more details.)"
         else ""
       val restart = MessageDialog.openQuestion(shell, "Restart Eclipse?",
-          "Weaving will be enabled only after restarting the workbench.\n\nRestart now?" + note)
+        "Weaving will be enabled only after restarting the workbench.\n\nRestart now?" + note)
       if (restart)
-        PlatformUI.getWorkbench.restart      
+        PlatformUI.getWorkbench.restart
     } else {
       showFailureDialog(changeResult)
     }
-  }  
-  
+  }
+
   def showFailureDialog(result: IStatus) {
-    val changeInstructions =     
-"""Error: could not enable JDT weaving (see detail below).
+    val changeInstructions =
+      """Error: could not enable JDT weaving (see detail below).
 
 To turn on JDT aspect weaving manually:
    1. Open the file <eclipse-install-dir>/eclipse/configuration/config.ini
@@ -389,7 +388,7 @@ To turn on JDT aspect weaving manually:
 
 To disable JDT weaving manually, remove "org.eclipse.equinox.weaving.hook" or the entire line "osgi.framework.extensions" as applicable.
 """
-    ErrorDialog.openError(shell, "Error enabling JDT weaving", changeInstructions, result);    
+    ErrorDialog.openError(shell, "Error enabling JDT weaving", changeInstructions, result);
   }
 }
 
@@ -407,9 +406,9 @@ object DiagnosticDialog {
         case e: NumberFormatException =>
           Left(Messages.format(PreferencesMessages.SpellingPreferencePage_invalid_threshold, number))
       }
-    }    
+    }
   }
-  
+
   object linkListener extends Listener {
     def handleEvent(e: Event) {
       try {
@@ -418,6 +417,6 @@ object DiagnosticDialog {
       } catch {
         case e: Exception => e.printStackTrace
       }
-    }  
-  }  
+    }
+  }
 }

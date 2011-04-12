@@ -32,37 +32,34 @@ import org.eclipse.jface.text.TextUtilities
 
 @RunWith(classOf[JUnit4ClassRunner])
 class TestScalaIndenter {
-  
-  /**
-   * Needed because the only constructor for DocumentCommand is protected
+
+  /** Needed because the only constructor for DocumentCommand is protected
    */
   class InstantiableDocumentCommands extends DocumentCommand {
-    
+
   }
-  
+
   class MockPreferenceProvider extends PreferenceProvider {
-    def updateCache : Unit = {
+    def updateCache: Unit = {
       // Nothing to do - we rely on someone setting up this cache
     }
   }
-  
-  /**
-   * This class overrides several functions in ScalaAutoIndentStrategy to reduce
-   * the overhead of things that need to be initialised for testing
+
+  /** This class overrides several functions in ScalaAutoIndentStrategy to reduce
+   *  the overhead of things that need to be initialised for testing
    */
   class TestScalaAutoIndentStrategy(
-      partitioning : String,
-      project : IJavaProject,
-      viewer : ISourceViewer,
-      preferenceProvider : MockPreferenceProvider
-    )  extends ScalaAutoIndentStrategy(partitioning, project, viewer, preferenceProvider) {
-    override def computeSmartMode : Boolean = {
+    partitioning: String,
+    project: IJavaProject,
+    viewer: ISourceViewer,
+    preferenceProvider: MockPreferenceProvider) extends ScalaAutoIndentStrategy(partitioning, project, viewer, preferenceProvider) {
+    override def computeSmartMode: Boolean = {
       return true
     }
   }
-  
+
   val CARET = "_|_"
-    
+
   @Before
   def initialiseClass() {
     // Initialisation fluff
@@ -76,11 +73,11 @@ class TestScalaIndenter {
       new JavaCore()
     }
   }
-  
-  def runTest(textSoFar : String, insert : String, expectedResultWithCaret : String) {
-    
+
+  def runTest(textSoFar: String, insert: String, expectedResultWithCaret: String) {
+
     val document = new Document(textSoFar.replace(CARET, ""))
-    
+
     // Create the command with all needed information
     val command = new InstantiableDocumentCommands()
     command.text = insert
@@ -89,10 +86,10 @@ class TestScalaIndenter {
     command.doit = true
     command.shiftsCaret = true
     command.caretOffset = -1
-    
+
     // Preferences for indentation
     val preferenceProvider = new MockPreferenceProvider
-    
+
     // For succinctness we alias DefaultCodeFormatterConstants to Dcfc
     import org.eclipse.jdt.core.formatter.{ DefaultCodeFormatterConstants => Dcfc }
     preferenceProvider.put(PreferenceConstants.EDITOR_CLOSE_BRACES, "true")
@@ -104,28 +101,28 @@ class TestScalaIndenter {
     preferenceProvider.put(Dcfc.FORMATTER_TAB_CHAR, "space")
     preferenceProvider.put(ScalaIndenter.TAB_SIZE, "2")
     preferenceProvider.put(ScalaIndenter.INDENT_SIZE, "2")
-    
+
     val project = new JavaProject()
-    
+
     val indentStrategy = new TestScalaAutoIndentStrategy(null, project, null, preferenceProvider)
     indentStrategy.customizeDocumentCommand(document, command)
-    
+
     // Allow for not moving the offset
-    val newOffset = 
+    val newOffset =
       if (command.caretOffset == -1) {
         (textSoFar.substring(0, textSoFar.indexOf(CARET)).replace(CARET, "") + command.text).length
       } else {
         command.caretOffset
       }
-      
-    val result = 
-      textSoFar.substring(0, textSoFar.indexOf(CARET)).replace(CARET, "") + 
-      command.text +  
-      textSoFar.substring(textSoFar.indexOf(CARET)).replace(CARET, "") 
+
+    val result =
+      textSoFar.substring(0, textSoFar.indexOf(CARET)).replace(CARET, "") +
+        command.text +
+        textSoFar.substring(textSoFar.indexOf(CARET)).replace(CARET, "")
 
     // Replace system specific new lines in the result with a generic '\n'
     val lineDelimiter = TextUtilities.getDefaultLineDelimiter(document)
-    val resultWithCleanNewLines = result.replaceAll(lineDelimiter, "\n") 
+    val resultWithCleanNewLines = result.replaceAll(lineDelimiter, "\n")
 
     val expectedResult = expectedResultWithCaret.replace(CARET, "")
     assertEquals(expectedResult.replace(CARET, ""), resultWithCleanNewLines)
@@ -134,12 +131,10 @@ class TestScalaIndenter {
     assertEquals(expectedOffset, newOffset)
   }
 
-  
-  /**
-   * Test:
+  /** Test:
    *   class x {<->
-   *  
-   * Becomes
+   *
+   *  Becomes
    *   class x {
    *     <->
    *   }
@@ -147,23 +142,21 @@ class TestScalaIndenter {
   @Test
   def testClassIndent() {
 
-    val textSoFar = 
+    val textSoFar =
       "class x {" + CARET
-    
-    val expectedResult = 
+
+    val expectedResult =
       textSoFar + "\n" +
-      "  " + CARET + "\n" +
-      "}"
-      
+        "  " + CARET + "\n" +
+        "}"
+
     runTest(textSoFar, "\n", expectedResult)
   }
 
-  
-  /**
-   * Test:
+  /** Test:
    *   trait x {<->
-   *  
-   * Becomes
+   *
+   *  Becomes
    *   trait x {
    *     <->
    *   }
@@ -171,25 +164,23 @@ class TestScalaIndenter {
   @Test
   def testTraitIndent() {
 
-    val textSoFar = 
+    val textSoFar =
       "trait x {" + CARET
-    
-    val expectedResult = 
+
+    val expectedResult =
       textSoFar + "\n" +
-      "  " + CARET + "\n" +
-      "}"
-      
+        "  " + CARET + "\n" +
+        "}"
+
     runTest(textSoFar, "\n", expectedResult)
   }
-  
 
-  /**
-   * Test:
+  /** Test:
    *   class x {
    *     def y = {<->
    *   }
-   *   
-   * Becomes
+   *
+   *  Becomes
    *   class x {
    *     def y = {
    *       <->
@@ -198,29 +189,27 @@ class TestScalaIndenter {
    */
   @Test
   def testDefIndent() {
-    val textSoFar = 
+    val textSoFar =
       "class x {\n" +
-      "  def y = {" + CARET + "\n" +
-      "}"
-    
-    val expectedResult = 
+        "  def y = {" + CARET + "\n" +
+        "}"
+
+    val expectedResult =
       "class x {\n" +
-      "  def y = {" + CARET + "\n" +
-      "    " + CARET + "\n" +
-      "  }\n" +
-      "}"
-    
+        "  def y = {" + CARET + "\n" +
+        "    " + CARET + "\n" +
+        "  }\n" +
+        "}"
+
     runTest(textSoFar, "\n", expectedResult)
   }
-  
 
-  /**
-   * Test:
+  /** Test:
    *   class x {
    *     def y : Int = {<->
    *   }
-   *   
-   * Becomes
+   *
+   *  Becomes
    *   class x {
    *     def y : Int = {
    *       <->
@@ -229,29 +218,27 @@ class TestScalaIndenter {
    */
   @Test
   def defWithType() {
-    val textSoFar = 
+    val textSoFar =
       "class x {\n" +
-      "  def y : Int = {" + CARET + "\n" +
-      "}"
-    
-    val expectedResult = 
+        "  def y : Int = {" + CARET + "\n" +
+        "}"
+
+    val expectedResult =
       "class x {\n" +
-      "  def y : Int = {" + CARET + "\n" +
-      "    " + CARET + "\n" +
-      "  }\n" +
-      "}"
-    
+        "  def y : Int = {" + CARET + "\n" +
+        "    " + CARET + "\n" +
+        "  }\n" +
+        "}"
+
     runTest(textSoFar, "\n", expectedResult)
   }
-  
 
-  /**
-   * Test:
+  /** Test:
    *   class x {
    *     val xs = List[x]<->
    *   }
-   *   
-   * Becomes
+   *
+   *  Becomes
    *   class x {
    *     val xs = List[x]
    *     <->
@@ -259,28 +246,26 @@ class TestScalaIndenter {
    */
   @Test
   def testGenericsIndent() {
-    val textSoFar = 
+    val textSoFar =
       "class x {\n" +
-      "  val xs = List[x]" + CARET + "\n" +
-      "}"
-    
-    val expectedResult = 
+        "  val xs = List[x]" + CARET + "\n" +
+        "}"
+
+    val expectedResult =
       "class x {\n" +
-      "  val xs = List[x]" + CARET + "\n" +
-      "  " + CARET + "\n" +
-      "}"
-    
+        "  val xs = List[x]" + CARET + "\n" +
+        "  " + CARET + "\n" +
+        "}"
+
     runTest(textSoFar, "\n", expectedResult)
   }
-  
 
-  /**
-   * Test:
+  /** Test:
    *   class x {
    *     val xs = List[<->
    *   }
-   *   
-   * Becomes
+   *
+   *  Becomes
    *   class x {
    *     val xs = List[
    *         <->
@@ -288,27 +273,25 @@ class TestScalaIndenter {
    */
   @Test
   def genericsIndentOverMultipleLines() {
-    val textSoFar = 
+    val textSoFar =
       "class x {\n" +
-      "  val xs = List[" + CARET + "\n" +
-      "}"
-    val expectedResult = 
+        "  val xs = List[" + CARET + "\n" +
+        "}"
+    val expectedResult =
       "class x {\n" +
-      "  val xs = List[" + CARET + "\n" +
-      "    " + CARET + "\n" +
-      "}"
-    
+        "  val xs = List[" + CARET + "\n" +
+        "    " + CARET + "\n" +
+        "}"
+
     runTest(textSoFar, "\n", expectedResult)
   }
-  
 
-  /**
-   * Test:
+  /** Test:
    *   class x {
    *     y()<->
    *   }
-   *   
-   * Becomes
+   *
+   *  Becomes
    *   class x {
    *     y()
    *     <->
@@ -316,17 +299,17 @@ class TestScalaIndenter {
    */
   @Test
   def afterFunctionCall() {
-    val textSoFar = 
+    val textSoFar =
       "class x {\n" +
-      "  y()" + CARET + "\n" +
-      "}"
-    
-    val expectedResult = 
+        "  y()" + CARET + "\n" +
+        "}"
+
+    val expectedResult =
       "class x {\n" +
-      "  y()" + CARET + "\n" +
-      "  " + CARET + "\n" +
-      "}"
-    
+        "  y()" + CARET + "\n" +
+        "  " + CARET + "\n" +
+        "}"
+
     runTest(textSoFar, "\n", expectedResult)
   }
 }

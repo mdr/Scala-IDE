@@ -13,43 +13,43 @@ import org.eclipse.jface.action.Action
 import org.eclipse.jface.text.ITextSelection
 import org.eclipse.jdt.ui.actions.IJavaEditorActionDefinitionIds
 
-import scala.tools.eclipse.javaelements.{ScalaClassFile, ScalaCompilationUnit}
+import scala.tools.eclipse.javaelements.{ ScalaClassFile, ScalaCompilationUnit }
 
 class ScalaClassFileEditor extends ClassFileEditor with ScalaEditor {
-  override def createJavaSourceViewerConfiguration : JavaSourceViewerConfiguration =
+  override def createJavaSourceViewerConfiguration: JavaSourceViewerConfiguration =
     new ScalaSourceViewerConfiguration(getPreferenceStore, ScalaPlugin.plugin.getPreferenceStore, this)
 
-  override def setSourceViewerConfiguration(configuration : SourceViewerConfiguration) {
+  override def setSourceViewerConfiguration(configuration: SourceViewerConfiguration) {
     super.setSourceViewerConfiguration(
       configuration match {
-        case svc : ScalaSourceViewerConfiguration => svc
-        case _ => new ScalaSourceViewerConfiguration(getPreferenceStore, ScalaPlugin.plugin.getPreferenceStore, this)
+        case svc: ScalaSourceViewerConfiguration => svc
+        case _                                   => new ScalaSourceViewerConfiguration(getPreferenceStore, ScalaPlugin.plugin.getPreferenceStore, this)
       })
   }
 
-  override def getElementAt(offset : Int) : IJavaElement = {
+  override def getElementAt(offset: Int): IJavaElement = {
     getInputJavaElement match {
-      case scf : ScalaClassFile => scf.getElementAt(offset)
-      case _ => null
+      case scf: ScalaClassFile => scf.getElementAt(offset)
+      case _                   => null
     }
   }
 
-  override def getCorrespondingElement(element : IJavaElement) : IJavaElement = {
-      getInputJavaElement match {
-        case scf : ScalaClassFile => scf.getCorrespondingElement(element).getOrElse(super.getCorrespondingElement(element))
-        case _ => super.getCorrespondingElement(element)
+  override def getCorrespondingElement(element: IJavaElement): IJavaElement = {
+    getInputJavaElement match {
+      case scf: ScalaClassFile => scf.getCorrespondingElement(element).getOrElse(super.getCorrespondingElement(element))
+      case _                   => super.getCorrespondingElement(element)
     }
   }
-  
-    override protected def createActions() {
+
+  override protected def createActions() {
     super.createActions()
     val openAction = new Action {
-	  override def run {
-	    Option(getInputJavaElement) map (_.asInstanceOf[ScalaCompilationUnit]) foreach { scu =>
-	      scu.followReference(ScalaClassFileEditor.this, getSelectionProvider.getSelection.asInstanceOf[ITextSelection])
-	    }
+      override def run {
+        Option(getInputJavaElement) map (_.asInstanceOf[ScalaCompilationUnit]) foreach { scu =>
+          scu.followReference(ScalaClassFileEditor.this, getSelectionProvider.getSelection.asInstanceOf[ITextSelection])
+        }
       }
-	}
+    }
     openAction.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_EDITOR)
     setAction("OpenEditor", openAction)
   }

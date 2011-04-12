@@ -55,8 +55,7 @@ import org.eclipse.jface.util.IPropertyChangeListener
 import org.eclipse.jface.util.PropertyChangeEvent
 import scala.tools.eclipse.util.SWTUtils._
 
-/**
- * @see org.eclipse.jdt.internal.ui.preferences.JavaEditorColoringConfigurationBlock
+/** @see org.eclipse.jdt.internal.ui.preferences.JavaEditorColoringConfigurationBlock
  */
 class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPreferencePage {
   import SyntaxColouringPreferencePage._
@@ -138,7 +137,7 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
 
     def getChildren(parentElement: AnyRef) = parentElement match {
       case Category(_, children) => children.toArray
-      case _ => Array()
+      case _                     => Array()
     }
 
     def getParent(element: AnyRef): Category = {
@@ -155,7 +154,7 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     def inputChanged(viewer: Viewer, oldInput: AnyRef, newInput: AnyRef) {}
 
     override def getText(element: AnyRef) = element match {
-      case Category(name, _) => name
+      case Category(name, _)                => name
       case ScalaSyntaxClass(displayName, _) => displayName
     }
   }

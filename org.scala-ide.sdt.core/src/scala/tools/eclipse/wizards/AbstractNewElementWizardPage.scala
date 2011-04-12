@@ -299,7 +299,7 @@ abstract class AbstractNewElementWizardPage extends NewTypeWizardPage(1, "") {
       val pf = getPackageFragment
       var p = pf match {
         case ipf: IPackageFragment => ipf
-        case _ => rt.getPackageFragment("")
+        case _                     => rt.getPackageFragment("")
       }
       p.exists match {
         case true => monitor.worked(1)
@@ -312,7 +312,7 @@ abstract class AbstractNewElementWizardPage extends NewTypeWizardPage(1, "") {
     val packageName = {
       !packageFragment.isDefaultPackage match {
         case true => Some(packageFragment.getElementName)
-        case _ => None
+        case _    => None
       }
     }
 

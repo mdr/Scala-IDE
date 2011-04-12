@@ -7,26 +7,26 @@
 package scala.tools.eclipse.wizards
 
 class NewClassWizardPage extends {
-	                     val declarationType = "Class" } 
-                         with AbstractNewElementWizardPage 
-                         with ClassOptions
+  val declarationType = "Class"
+} with AbstractNewElementWizardPage
+  with ClassOptions
 
 class NewTraitWizardPage extends {
-                         val declarationType = "Trait" } 
-                         with AbstractNewElementWizardPage 
-                         with TraitOptions
+  val declarationType = "Trait"
+} with AbstractNewElementWizardPage
+  with TraitOptions
 
 class NewObjectWizardPage extends {
-                          val declarationType = "Object" } 
-                          with AbstractNewElementWizardPage 
-                          with ObjectOptions
+  val declarationType = "Object"
+} with AbstractNewElementWizardPage
+  with ObjectOptions
 
-class NewClassWizard 
+class NewClassWizard
   extends AbstractNewElementWizard(new NewClassWizardPage())
 
 class NewTraitWizard
   extends AbstractNewElementWizard(new NewTraitWizardPage())
 
-class NewObjectWizard 
+class NewObjectWizard
   extends AbstractNewElementWizard(new NewObjectWizardPage())
 

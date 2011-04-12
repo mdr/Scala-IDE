@@ -14,7 +14,7 @@ import scala.tools.eclipse.contribution.weaving.jdt.cfprovider.IClassFileProvide
 import scala.tools.eclipse.ScalaClassFileDescriber
 
 class ScalaClassFileProvider extends IClassFileProvider {
-  override def create(contents : Array[Byte], parent : PackageFragment, name : String) : ClassFile =
+  override def create(contents: Array[Byte], parent: PackageFragment, name: String): ClassFile =
     ScalaClassFileDescriber.isScala(new ByteArrayInputStream(contents)) match {
       case Some(sourceFile) =>
         val scf = new ScalaClassFile(parent, name, sourceFile)

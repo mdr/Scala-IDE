@@ -5,6 +5,6 @@ import org.eclipse.jdt.core.WorkingCopyOwner
 import org.eclipse.jdt.internal.core.PackageFragment
 
 class ScalaCompilationUnitProvider extends ICompilationUnitProvider {
-  def create(parent : PackageFragment, name : String, owner : WorkingCopyOwner) =
+  def create(parent: PackageFragment, name: String, owner: WorkingCopyOwner) =
     new ScalaSourceFile(parent, name, owner)
 }

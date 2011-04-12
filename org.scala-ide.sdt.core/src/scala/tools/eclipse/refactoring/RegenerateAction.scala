@@ -26,33 +26,33 @@ import scala.tools.eclipse.javaelements.ScalaSourceFile
 import scala.tools.eclipse.ScalaPresentationCompiler
 
 class RegenerateAction extends RefactoringAction {
-  
+
   class RegenerateScalaIdeRefactoring(file: ScalaSourceFile) extends ScalaIdeRefactoring("Regenerate Sourcecode") {
-    
+
     abstract class RegenerateRefactoring extends MultiStageRefactoring with ConsoleTracing {
-      
+
       class PreparationResult
       class RefactoringParameters
-  
+
       def prepare(s: Selection): Either[PreparationError, PreparationResult] = Right(new PreparationResult)
-    
+
       def perform(selection: Selection, prepared: PreparationResult, params: RefactoringParameters): Either[RefactoringError, List[Change]] = {
-        Right(List(new Change(file.file, 0, file.getSource.length-1, createText(selection.root))))
-        
-//        Right(refactor(List(selection.root)))
+        Right(List(new Change(file.file, 0, file.getSource.length - 1, createText(selection.root))))
+
+        //        Right(refactor(List(selection.root)))
       }
     }
-                  
-    val refactoring = file.withSourceFile((_,compiler) => new RegenerateRefactoring {
+
+    val refactoring = file.withSourceFile((_, compiler) => new RegenerateRefactoring {
       val global = compiler
-    }) ()
-            
+    })()
+
     lazy val selection = createSelection(file, 0, 0)
-    
+
     def initialCheck = refactoring.prepare(selection)
-    
-    def refactoringParameters = new refactoring.RefactoringParameters    
+
+    def refactoringParameters = new refactoring.RefactoringParameters
   }
-  
+
   def createRefactoring(selectionStart: Int, selectionEnd: Int, file: ScalaSourceFile) = Some(new RegenerateScalaIdeRefactoring(file))
 }

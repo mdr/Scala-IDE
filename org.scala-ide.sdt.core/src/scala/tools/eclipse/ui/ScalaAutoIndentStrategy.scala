@@ -65,31 +65,26 @@ import scala.util.matching.Regex
 
 import org.eclipse.jdt.internal.ui.text.Symbols;
 
-
 import scala.util.matching.Regex
 
-
-/**
- * Auto indent strategy sensitive to brackets.
- * 
- * @param partitioning the document partitioning
- * @param project the project to get formatting preferences from, or null to use default preferences
- * @param viewer the source viewer that this strategy is attached to
+/** Auto indent strategy sensitive to brackets.
+ *
+ *  @param partitioning the document partitioning
+ *  @param project the project to get formatting preferences from, or null to use default preferences
+ *  @param viewer the source viewer that this strategy is attached to
  */
 class ScalaAutoIndentStrategy(
-    val fPartitioning : String,
-    val fProject : IJavaProject, 
-    val fViewer : ISourceViewer,
-    val preferencesProvider : PreferenceProvider
-  ) extends DefaultIndentLineAutoEditStrategy {
+  val fPartitioning: String,
+  val fProject: IJavaProject,
+  val fViewer: ISourceViewer,
+  val preferencesProvider: PreferenceProvider) extends DefaultIndentLineAutoEditStrategy {
 
   // The line comment introducer. Value is "{@value}"
-  private val LINE_COMMENT= "//"
+  private val LINE_COMMENT = "//"
 
   private class CompilationUnitInfo(
-    var buffer : Array[Char],
-    var delta : Int
-  )
+    var buffer: Array[Char],
+    var delta: Int)
 
   private def fCloseBrace = preferencesProvider.getBoolean(PreferenceConstants.EDITOR_CLOSE_BRACES)
   private var fIsSmartMode = false
@@ -97,15 +92,14 @@ class ScalaAutoIndentStrategy(
 
   // TODO This could be in a singleton as in the original, but that sucks.
   private var fgScanner = ToolFactory.createScanner(false, false, false, false)
-  
-  /**
-   * Determine the count of brackets within a given area of the document
+
+  /** Determine the count of brackets within a given area of the document
    */
-  private def getBracketCount(d : IDocument, startOffset : Int, endOffset : Int, pIgnoreCloseBrackets : Boolean) : Int = {
+  private def getBracketCount(d: IDocument, startOffset: Int, endOffset: Int, pIgnoreCloseBrackets: Boolean): Int = {
     var bracketCount = 0
     var ignoreCloseBrackets = pIgnoreCloseBrackets
     var offset = startOffset
-    
+
     while (offset < endOffset) {
       val curr = d.getChar(offset)
       offset += 1
@@ -145,11 +139,9 @@ class ScalaAutoIndentStrategy(
     return bracketCount
   }
 
-  
-  /**
-   * Find the end of a comment
+  /** Find the end of a comment
    */
-  private def getCommentEnd(d : IDocument, initialOffset : Int, endOffset : Int) : Int = {
+  private def getCommentEnd(d: IDocument, initialOffset: Int, endOffset: Int): Int = {
     var offset = initialOffset
     while (offset < endOffset) {
       val curr = d.getChar(offset)
@@ -163,8 +155,7 @@ class ScalaAutoIndentStrategy(
     return endOffset
   }
 
-  
-  private def getIndentOfLine(d : IDocument, line : Int) : String = {
+  private def getIndentOfLine(d: IDocument, line: Int): String = {
     if (line > -1) {
       val start = d.getLineOffset(line)
       val end = start + d.getLineLength(line) - 1
@@ -175,7 +166,7 @@ class ScalaAutoIndentStrategy(
     }
   }
 
-  private def getStringEnd(d : IDocument, initialOffset : Int, endOffset : Int, ch : Char) : Int = {
+  private def getStringEnd(d: IDocument, initialOffset: Int, endOffset: Int, ch: Char): Int = {
     var offset = initialOffset
     while (offset < endOffset) {
       val curr = d.getChar(offset)
@@ -189,12 +180,12 @@ class ScalaAutoIndentStrategy(
     }
     return endOffset
   }
-  
-  private def createIndenter(d : IDocument, scanner : JavaHeuristicScanner) : ScalaIndenter = {
+
+  private def createIndenter(d: IDocument, scanner: JavaHeuristicScanner): ScalaIndenter = {
     return new ScalaIndenter(d, scanner, fProject, preferencesProvider)
   }
 
-  private def smartIndentAfterClosingBracket(d : IDocument, c : DocumentCommand) : Unit = {
+  private def smartIndentAfterClosingBracket(d: IDocument, c: DocumentCommand): Unit = {
     if (c.offset == -1 || d.getLength() == 0)
       return
 
@@ -221,16 +212,16 @@ class ScalaAutoIndentStrategy(
           // modify document command
           c.length += c.offset - start
           c.offset = start
-          c.text= replaceText.toString()
+          c.text = replaceText.toString()
         }
       }
     } catch {
-      case e : BadLocationException =>
+      case e: BadLocationException =>
         JavaPlugin.log(e)
     }
   }
 
-  private def smartIndentAfterOpeningBracket(d : IDocument, c : DocumentCommand) : Unit = {
+  private def smartIndentAfterOpeningBracket(d: IDocument, c: DocumentCommand): Unit = {
     if (c.offset < 1 || d.getLength() == 0)
       return
 
@@ -248,10 +239,10 @@ class ScalaAutoIndentStrategy(
         return
 
       // line of last Java code
-      val pos= scanner.findNonWhitespaceBackward(p, JavaHeuristicScanner.UNBOUND)
+      val pos = scanner.findNonWhitespaceBackward(p, JavaHeuristicScanner.UNBOUND)
       if (pos == -1)
         return
-      val lastLine= d.getLineOfOffset(pos)
+      val lastLine = d.getLineOfOffset(pos)
 
       // only shift if the last java line is further up and is a braceless block candidate
       if (lastLine < line) {
@@ -261,18 +252,18 @@ class ScalaAutoIndentStrategy(
         val toDelete = d.get(lineOffset, c.offset - lineOffset)
         if (indent != null && !indent.toString().equals(toDelete)) {
           c.text = indent.append(c.text).toString()
-          c.length += c.offset - lineOffset          
+          c.length += c.offset - lineOffset
           c.offset = lineOffset
         }
       }
 
     } catch {
-      case e : BadLocationException =>
+      case e: BadLocationException =>
         JavaPlugin.log(e)
     }
   }
 
-  private def smartIndentAfterNewLine(d : IDocument, c : DocumentCommand) : Unit = {
+  private def smartIndentAfterNewLine(d: IDocument, c: DocumentCommand): Unit = {
     val scanner = new JavaHeuristicScanner(d)
     val indenter = createIndenter(d, scanner)
     var indent = indenter.computeIndentation(c.offset)
@@ -285,9 +276,9 @@ class ScalaAutoIndentStrategy(
 
     try {
       val p = if (c.offset == docLength) c.offset - 1 else c.offset
-      val line= d.getLineOfOffset(p)
+      val line = d.getLineOfOffset(p)
 
-      val buf= new StringBuffer(c.text + indent)
+      val buf = new StringBuffer(c.text + indent)
 
       val reg = d.getLineInformation(line)
       val lineEnd = reg.getOffset() + reg.getLength()
@@ -310,14 +301,14 @@ class ScalaAutoIndentStrategy(
 
         if (c.offset == 0 || computeAnonymousPosition(d, c.offset - 1, fPartitioning, lineEnd) == -1) {
           if (lineEnd - contentStart > 0) {
-            c.length =  lineEnd - c.offset
+            c.length = lineEnd - c.offset
             buf.append(d.get(contentStart, lineEnd - contentStart).toCharArray())
           }
         }
 
         buf.append(TextUtilities.getDefaultLineDelimiter(d))
         val nonWS = findEndOfWhiteSpace(d, start, lineEnd)
-        val reference = 
+        val reference =
           if (nonWS < c.offset && d.getChar(nonWS) == '{')
             new StringBuffer(d.get(start, nonWS - start))
           else
@@ -325,8 +316,7 @@ class ScalaAutoIndentStrategy(
         if (reference != null)
           buf.append(reference)
         buf.append('}')
-      }
-      // insert extra line upon new line between two braces
+      } // insert extra line upon new line between two braces
       else if (c.offset > start && contentStart < lineEnd && d.getChar(contentStart) == '}') {
         val firstCharPos = scanner.findNonWhitespaceBackward(c.offset - 1, start)
         if (firstCharPos != JavaHeuristicScanner.NOT_FOUND && d.getChar(firstCharPos) == '{') {
@@ -334,7 +324,7 @@ class ScalaAutoIndentStrategy(
           c.shiftsCaret = false
 
           val nonWS = findEndOfWhiteSpace(d, start, lineEnd)
-          val reference = 
+          val reference =
             if (nonWS < c.offset && d.getChar(nonWS) == '{')
               new StringBuffer(d.get(start, nonWS - start))
             else
@@ -349,22 +339,21 @@ class ScalaAutoIndentStrategy(
       c.text = buf.toString()
 
     } catch {
-      case e : BadLocationException =>
+      case e: BadLocationException =>
         JavaPlugin.log(e)
     }
   }
 
-  /**
-   * Computes an insert position for an opening brace if <code>offset</code> maps to a position in
-   * <code>document</code> with a expression in parenthesis that will take a block after the closing parenthesis.
+  /** Computes an insert position for an opening brace if <code>offset</code> maps to a position in
+   *  <code>document</code> with a expression in parenthesis that will take a block after the closing parenthesis.
    *
-   * @param document the document being modified
-   * @param offset the offset of the caret position, relative to the line start.
-   * @param partitioning the document partitioning
-   * @param max the max position
-   * @return an insert position relative to the line start if <code>line</code> contains a parenthesized expression that can be followed by a block, -1 otherwise
+   *  @param document the document being modified
+   *  @param offset the offset of the caret position, relative to the line start.
+   *  @param partitioning the document partitioning
+   *  @param max the max position
+   *  @return an insert position relative to the line start if <code>line</code> contains a parenthesized expression that can be followed by a block, -1 otherwise
    */
-  private def computeAnonymousPosition(document : IDocument, offset : Int, partitioning : String, max : Int) : Int = {
+  private def computeAnonymousPosition(document: IDocument, offset: Int, partitioning: String, max: Int): Int = {
     // find the opening parenthesis for every closing parenthesis on the current line after offset
     // return the position behind the closing parenthesis if it looks like a method declaration
     // or an expression for an if, while, for, catch statement
@@ -381,16 +370,16 @@ class ScalaAutoIndentStrategy(
     val hasNewToken = looksLikeAnonymousClassDef(document, partitioning, scanner, pos)
     var done = false
     while (!done) {
-      val startScan= closingParen + 1
+      val startScan = closingParen + 1
       closingParen = scanner.scanForward(startScan, scanTo, ')')
       if (closingParen == -1) {
         if (hasNewToken && openingParen != -1)
           return openingParen + 1
         done = true
       } else {
-  
+
         openingParen = scanner.findOpeningPeer(closingParen - 1, '(', ')');
-  
+
         // no way an expression at the beginning of the document can mean anything
         if (openingParen < 1) {
           done = true
@@ -406,37 +395,33 @@ class ScalaAutoIndentStrategy(
     return -1
   }
 
-  
-  /**
-   * Finds a closing parenthesis to the left of <code>position</code> in document, where that parenthesis is only
-   * separated by whitespace from <code>position</code>. If no such parenthesis can be found, <code>position</code> is returned.
-   * 
-   * @param scanner the java heuristic scanner set up on the document
-   * @param position the first character position in <code>document</code> to be considered
-   * @return the position of a closing parenthesis left to <code>position</code> separated only by whitespace, or <code>position</code> if no parenthesis can be found
+  /** Finds a closing parenthesis to the left of <code>position</code> in document, where that parenthesis is only
+   *  separated by whitespace from <code>position</code>. If no such parenthesis can be found, <code>position</code> is returned.
+   *
+   *  @param scanner the java heuristic scanner set up on the document
+   *  @param position the first character position in <code>document</code> to be considered
+   *  @return the position of a closing parenthesis left to <code>position</code> separated only by whitespace, or <code>position</code> if no parenthesis can be found
    */
-  private def findClosingParenToLeft(scanner : JavaHeuristicScanner, position : Int) : Int = {
+  private def findClosingParenToLeft(scanner: JavaHeuristicScanner, position: Int): Int = {
     if (position < 1)
       return position
 
     if (scanner.previousToken(position - 1, JavaHeuristicScanner.UNBOUND) == Symbols.TokenRPAREN)
       return scanner.getPosition() + 1
-      
+
     return position
   }
-  
 
-  /**
-   * Checks whether the content of <code>document</code> in the range (<code>offset</code>, <code>length</code>)
-   * contains the <code>new</code> keyword.
+  /** Checks whether the content of <code>document</code> in the range (<code>offset</code>, <code>length</code>)
+   *  contains the <code>new</code> keyword.
    *
-   * @param document the document being modified
-   * @param offset the first character position in <code>document</code> to be considered
-   * @param length the length of the character range to be considered
-   * @param partitioning the document partitioning
-   * @return <code>true</code> if the specified character range contains a <code>new</code> keyword, <code>false</code> otherwise.
+   *  @param document the document being modified
+   *  @param offset the first character position in <code>document</code> to be considered
+   *  @param length the length of the character range to be considered
+   *  @param partitioning the document partitioning
+   *  @return <code>true</code> if the specified character range contains a <code>new</code> keyword, <code>false</code> otherwise.
    */
-  private def isNewMatch(document : IDocument, offset : Int, length : Int, partitioning : String) : Boolean = {
+  private def isNewMatch(document: IDocument, offset: Int, length: Int, partitioning: String): Boolean = {
     Assert.isTrue(length >= 0)
     Assert.isTrue(offset >= 0)
     Assert.isTrue(offset + length < document.getLength() + 1)
@@ -460,24 +445,22 @@ class ScalaAutoIndentStrategy(
       return true
 
     } catch {
-      case e : BadLocationException => // Ignore this exception
+      case e: BadLocationException => // Ignore this exception
     }
     return false
   }
 
-  
-  /**
-   * Checks whether the content of <code>document</code> at <code>position</code> looks like an
-   * anonymous class definition. <code>position</code> must be to the left of the opening
-   * parenthesis of the definition's parameter list.
+  /** Checks whether the content of <code>document</code> at <code>position</code> looks like an
+   *  anonymous class definition. <code>position</code> must be to the left of the opening
+   *  parenthesis of the definition's parameter list.
    *
-   * @param document the document being modified
-   * @param partitioning the document partitioning
-   * @param scanner the scanner
-   * @param position the first character position in <code>document</code> to be considered
-   * @return <code>true</code> if the content of <code>document</code> looks like an anonymous class definition, <code>false</code> otherwise
+   *  @param document the document being modified
+   *  @param partitioning the document partitioning
+   *  @param scanner the scanner
+   *  @param position the first character position in <code>document</code> to be considered
+   *  @return <code>true</code> if the content of <code>document</code> looks like an anonymous class definition, <code>false</code> otherwise
    */
-  private def looksLikeAnonymousClassDef(document : IDocument, partitioning : String, scanner : JavaHeuristicScanner, position : Int) : Boolean = {
+  private def looksLikeAnonymousClassDef(document: IDocument, partitioning: String, scanner: JavaHeuristicScanner, position: Int): Boolean = {
     val previousCommaParenEqual = scanner.scanBackward(position - 1, JavaHeuristicScanner.UNBOUND, Array[Char](',', '(', '='))
     if (previousCommaParenEqual == -1 || position < previousCommaParenEqual + 5) // 2 for borders, 3 for "new"
       return false
@@ -488,16 +471,14 @@ class ScalaAutoIndentStrategy(
     return false
   }
 
-  
-  /**
-   * Checks whether <code>position</code> resides in a default (Java) partition of <code>document</code>.
+  /** Checks whether <code>position</code> resides in a default (Java) partition of <code>document</code>.
    *
-   * @param document the document being modified
-   * @param position the position to be checked
-   * @param partitioning the document partitioning
-   * @return <code>true</code> if <code>position</code> is in the default partition of <code>document</code>, <code>false</code> otherwise
+   *  @param document the document being modified
+   *  @param position the position to be checked
+   *  @param partitioning the document partitioning
+   *  @return <code>true</code> if <code>position</code> is in the default partition of <code>document</code>, <code>false</code> otherwise
    */
-  private def isDefaultPartition(document : IDocument, position : Int, partitioning : String) : Boolean = {
+  private def isDefaultPartition(document: IDocument, position: Int, partitioning: String): Boolean = {
     Assert.isTrue(position >= 0)
     Assert.isTrue(position <= document.getLength())
 
@@ -505,25 +486,25 @@ class ScalaAutoIndentStrategy(
       val region = TextUtilities.getPartition(document, partitioning, position, false)
       return region.getType().equals(IDocument.DEFAULT_CONTENT_TYPE)
     } catch {
-      case _ : BadLocationException => // Ignore this exception
+      case _: BadLocationException => // Ignore this exception
     }
 
     return false
   }
 
-  private def isClosed(document : IDocument, offset : Int, length : Int) : Boolean = {
+  private def isClosed(document: IDocument, offset: Int, length: Int): Boolean = {
 
     val info = getCompilationUnitForMethod(document, offset)
     if (info == null)
       return false
 
-    var compilationUnit : CompilationUnit = null
+    var compilationUnit: CompilationUnit = null
     try {
       val parser = ASTParser.newParser(AST.JLS3)
       parser.setSource(info.buffer)
       compilationUnit = parser.createAST(null).asInstanceOf[CompilationUnit]
     } catch {
-      case _ : ArrayIndexOutOfBoundsException =>
+      case _: ArrayIndexOutOfBoundsException =>
         // work around for parser problem
         return false
     }
@@ -572,21 +553,21 @@ class ScalaAutoIndentStrategy(
         }
 
       case ASTNode.WHILE_STATEMENT =>
-        val expression = node.asInstanceOf[WhileStatement].getExpression() 
+        val expression = node.asInstanceOf[WhileStatement].getExpression()
         val expressionRegion = createRegion(expression, info.delta)
         val body = node.asInstanceOf[WhileStatement].getBody()
         val bodyRegion = createRegion(body, info.delta)
-  
+
         // between expression and body statement
         if (expressionRegion.getOffset() + expressionRegion.getLength() <= offset && offset + length <= bodyRegion.getOffset())
           return body != null
 
       case ASTNode.FOR_STATEMENT =>
-        val expression = node.asInstanceOf[ForStatement].getExpression() 
+        val expression = node.asInstanceOf[ForStatement].getExpression()
         val expressionRegion = createRegion(expression, info.delta)
         val body = node.asInstanceOf[ForStatement].getBody()
         val bodyRegion = createRegion(body, info.delta)
-  
+
         // between expression and body statement
         if (expressionRegion.getOffset() + expressionRegion.getLength() <= offset && offset + length <= bodyRegion.getOffset())
           return body != null
@@ -599,36 +580,33 @@ class ScalaAutoIndentStrategy(
 
         if (doRegion.getOffset() + doRegion.getLength() <= offset && offset + length <= bodyRegion.getOffset())
           return body != null
-          
+
       case _ =>
-        // Do nothing
+      // Do nothing
     }
 
     return true
   }
 
-  
-  /**
-   * Installs a java partitioner with <code>document</code>.
+  /** Installs a java partitioner with <code>document</code>.
    *
-   * @param document the document
+   *  @param document the document
    */
-  private def installJavaStuff(document : Document) : Unit = {
+  private def installJavaStuff(document: Document): Unit = {
     val partitioner = new ScalaDocumentPartitioner
     partitioner.connect(document)
     document.setDocumentPartitioner(IJavaPartitions.JAVA_PARTITIONING, partitioner)
   }
 
-  /**
-   * Removes a java partitioner from <code>document</code>.
+  /** Removes a java partitioner from <code>document</code>.
    *
-   * @param document the document
+   *  @param document the document
    */
-  private def removeJavaStuff(document : Document) : Unit = {
+  private def removeJavaStuff(document: Document): Unit = {
     document.setDocumentPartitioner(IJavaPartitions.JAVA_PARTITIONING, null)
   }
 
-  private def smartPaste(document : IDocument, command : DocumentCommand) : Unit = {
+  private def smartPaste(document: IDocument, command: DocumentCommand): Unit = {
     // TODO Implement me
     /*
     int newOffset= command.offset;
@@ -738,19 +716,17 @@ class ScalaAutoIndentStrategy(
     */
   }
 
-  
-  /**
-   * Returns the indentation of the line <code>line</code> in <code>document</code>.
-   * The returned string may contain pairs of leading slashes that are considered
-   * part of the indentation. The space before the asterisk in a javadoc-like
-   * comment is not considered part of the indentation.
+  /** Returns the indentation of the line <code>line</code> in <code>document</code>.
+   *  The returned string may contain pairs of leading slashes that are considered
+   *  part of the indentation. The space before the asterisk in a javadoc-like
+   *  comment is not considered part of the indentation.
    *
-   * @param document the document
-   * @param line the line
-   * @return the indentation of <code>line</code> in <code>document</code>
-   * @throws BadLocationException if the document is changed concurrently
+   *  @param document the document
+   *  @param line the line
+   *  @return the indentation of <code>line</code> in <code>document</code>
+   *  @throws BadLocationException if the document is changed concurrently
    */
-  private def getCurrentIndent(document : Document, line : Int) : String = {
+  private def getCurrentIndent(document: Document, line: Int): String = {
     val region = document.getLineInformation(line)
     val from = region.getOffset()
     val endOffset = region.getOffset() + region.getLength()
@@ -765,7 +741,7 @@ class ScalaAutoIndentStrategy(
       val ch = document.getChar(to)
       if (!Character.isWhitespace(ch))
         done = true
-      else 
+      else
         to += 1
     }
 
@@ -779,19 +755,17 @@ class ScalaAutoIndentStrategy(
     return document.get(from, to - from)
   }
 
-  
-  /**
-   * Computes the difference of two indentations and returns the difference in
-   * length of current and correct. If the return value is positive, <code>addition</code>
-   * is initialized with a substring of that length of <code>correct</code>.
+  /** Computes the difference of two indentations and returns the difference in
+   *  length of current and correct. If the return value is positive, <code>addition</code>
+   *  is initialized with a substring of that length of <code>correct</code>.
    *
-   * @param correct the correct indentation
-   * @param current the current indentation (might contain non-whitespace)
-   * @param difference a string buffer - if the return value is positive, it will be cleared and set to the substring of <code>current</code> of that length
-   * @param tabLength the length of a tab
-   * @return the difference in length of <code>correct</code> and <code>current</code>
+   *  @param correct the correct indentation
+   *  @param current the current indentation (might contain non-whitespace)
+   *  @param difference a string buffer - if the return value is positive, it will be cleared and set to the substring of <code>current</code> of that length
+   *  @param tabLength the length of a tab
+   *  @return the difference in length of <code>correct</code> and <code>current</code>
    */
-  private def subtractIndent(correct : CharSequence, current : CharSequence, difference : StringBuffer, tabLength : Int) : Int = {
+  private def subtractIndent(correct: CharSequence, current: CharSequence, difference: StringBuffer, tabLength: Int): Int = {
     val c1 = computeVisualLength(correct, tabLength)
     val c2 = computeVisualLength(current, tabLength)
     val diff = c1 - c2
@@ -811,18 +785,16 @@ class ScalaAutoIndentStrategy(
     return diff
   }
 
-  
-  /**
-   * Indents line <code>line</code> in <code>document</code> with <code>indent</code>.
-   * Leaves leading comment signs alone.
+  /** Indents line <code>line</code> in <code>document</code> with <code>indent</code>.
+   *  Leaves leading comment signs alone.
    *
-   * @param document the document
-   * @param line the line
-   * @param indent the indentation to insert
-   * @param tabLength the length of a tab
-   * @throws BadLocationException on concurrent document modification
+   *  @param document the document
+   *  @param line the line
+   *  @param indent the indentation to insert
+   *  @param tabLength the length of a tab
+   *  @throws BadLocationException on concurrent document modification
    */
-  private def addIndent(document : Document, line : Int, indent : CharSequence, tabLength : Int) : Unit = {
+  private def addIndent(document: Document, line: Int, indent: CharSequence, tabLength: Int): Unit = {
     val region = document.getLineInformation(line)
     var insert = region.getOffset()
     val endOffset = region.getOffset() + region.getLength()
@@ -837,13 +809,13 @@ class ScalaAutoIndentStrategy(
       var whitespaceCount = 0;
       var i = newInsert;
       while (i < endOffset - 1) {
-         val ch = document.get(i, 1).charAt(0)
-         if (!Character.isWhitespace(ch)) {
-           i = endOffset - 1
-         } else {
-           whitespaceCount = whitespaceCount + computeVisualLength(ch, tabLength)
-           i += 1
-         }
+        val ch = document.get(i, 1).charAt(0)
+        if (!Character.isWhitespace(ch)) {
+          i = endOffset - 1
+        } else {
+          whitespaceCount = whitespaceCount + computeVisualLength(ch, tabLength)
+          i += 1
+        }
       }
 
       if (whitespaceCount != 0 && whitespaceCount >= CodeFormatterUtil.getIndentWidth(fProject))
@@ -854,19 +826,17 @@ class ScalaAutoIndentStrategy(
     document.replace(insert, 0, indent.toString())
   }
 
-  
-  /**
-   * Cuts the visual equivalent of <code>toDelete</code> characters out of the
-   * indentation of line <code>line</code> in <code>document</code>. Leaves
-   * leading comment signs alone.
+  /** Cuts the visual equivalent of <code>toDelete</code> characters out of the
+   *  indentation of line <code>line</code> in <code>document</code>. Leaves
+   *  leading comment signs alone.
    *
-   * @param document the document
-   * @param line the line
-   * @param toDelete the number of space equivalents to delete
-   * @param tabLength the length of a tab
-   * @throws BadLocationException on concurrent document modification
+   *  @param document the document
+   *  @param line the line
+   *  @param toDelete the number of space equivalents to delete
+   *  @param tabLength the length of a tab
+   *  @throws BadLocationException on concurrent document modification
    */
-  private def cutIndent(document : Document, line : Int, ptoDelete : Int, tabLength : Int) : Unit = {
+  private def cutIndent(document: Document, line: Int, ptoDelete: Int, tabLength: Int): Unit = {
     val region = document.getLineInformation(line)
     var from = region.getOffset()
     val endOffset = region.getOffset() + region.getLength()
@@ -892,18 +862,16 @@ class ScalaAutoIndentStrategy(
 
     document.replace(from, to - from, "")
   }
-  
 
-  /**
-   * Returns the visual length of a given <code>CharSequence</code> taking into
-   * account the visual tabulator length.
+  /** Returns the visual length of a given <code>CharSequence</code> taking into
+   *  account the visual tabulator length.
    *
-   * @param seq the string to measure
-   * @param tabLength the length of a tab
-   * @return the visual length of <code>seq</code>
+   *  @param seq the string to measure
+   *  @param tabLength the length of a tab
+   *  @return the visual length of <code>seq</code>
    */
-  private def computeVisualLength(seq : CharSequence, tabLength : Int) : Int = {
-    var size= 0
+  private def computeVisualLength(seq: CharSequence, tabLength: Int): Int = {
+    var size = 0
 
     for (i <- 0 until seq.length()) {
       val ch = seq.charAt(i)
@@ -918,58 +886,50 @@ class ScalaAutoIndentStrategy(
     return size
   }
 
-  
-  /**
-   * Returns the visual length of a given character taking into
-   * account the visual tabulator length.
+  /** Returns the visual length of a given character taking into
+   *  account the visual tabulator length.
    *
-   * @param ch the character to measure
-   * @param tabLength the length of a tab
-   * @return the visual length of <code>ch</code>
+   *  @param ch the character to measure
+   *  @param tabLength the length of a tab
+   *  @return the visual length of <code>ch</code>
    */
-  private def computeVisualLength(ch : Char, tabLength : Int) : Int = {
+  private def computeVisualLength(ch: Char, tabLength: Int): Int = {
     if (ch == '\t')
       return tabLength
     else
       return 1
   }
-  
 
-  /**
-   * The preference setting for the visual tabulator display.
+  /** The preference setting for the visual tabulator display.
    *
-   * @return the number of spaces displayed for a tabulator in the editor
+   *  @return the number of spaces displayed for a tabulator in the editor
    */
-  private def getVisualTabLengthPreference : Int = CodeFormatterUtil.getTabWidth(fProject)
+  private def getVisualTabLengthPreference: Int = CodeFormatterUtil.getTabWidth(fProject)
 
-  
-  /**
-   * The preference setting that tells whether to insert spaces when pressing the Tab key.
+  /** The preference setting that tells whether to insert spaces when pressing the Tab key.
    *
-   * @return <code>true</code> if spaces are inserted when pressing the Tab key
-   * @since 3.5
+   *  @return <code>true</code> if spaces are inserted when pressing the Tab key
+   *  @since 3.5
    */
-  private def isInsertingSpacesForTab : Boolean =
+  private def isInsertingSpacesForTab: Boolean =
     JavaCore.SPACE.equals(getCoreOption(fProject, DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR))
 
-
-  /**
-   * Returns the possibly <code>project</code>-specific core preference defined under
-   * <code>key</code>.
+  /** Returns the possibly <code>project</code>-specific core preference defined under
+   *  <code>key</code>.
    *
-   * @param project the project to get the preference from, or <code>null</code> to get the global
+   *  @param project the project to get the preference from, or <code>null</code> to get the global
    *            preference
-   * @param key the key of the preference
-   * @return the value of the preference
-   * @since 3.5
+   *  @param key the key of the preference
+   *  @return the value of the preference
+   *  @since 3.5
    */
-  private def getCoreOption(project : IJavaProject, key : String) : String = {
+  private def getCoreOption(project: IJavaProject, key: String): String = {
     if (project == null)
       return JavaCore.getOption(key)
     return project.getOption(key, true)
   }
 
-  private def getPeerPosition(document : IDocument, command : DocumentCommand) : Int = {
+  private def getPeerPosition(document: IDocument, command: DocumentCommand): Int = {
 
     if (document.getLength() == 0)
       return 0
@@ -1005,66 +965,63 @@ class ScalaAutoIndentStrategy(
           pPos = skipScope(pScanner, pPos, token)
           if (pPos == JavaHeuristicScanner.NOT_FOUND)
             return firstPeer
-          // closed scope -> keep searching
+        // closed scope -> keep searching
         case Symbols.TokenRBRACE =>
           val peer = dScanner.findOpeningPeer(dPos, '{', '}')
           dPos = peer - 1
           if (peer == JavaHeuristicScanner.NOT_FOUND)
             return firstPeer
           firstPeer = peer
-          // keep searching
+        // keep searching
         case Symbols.TokenRBRACKET =>
           val peer = dScanner.findOpeningPeer(dPos, '[', ']')
           dPos = peer - 1
           if (peer == JavaHeuristicScanner.NOT_FOUND)
             return firstPeer
           firstPeer = peer
-          // keep searching
+        // keep searching
         case Symbols.TokenRPAREN =>
           val peer = dScanner.findOpeningPeer(dPos, '(', ')')
           dPos = peer - 1
           if (peer == JavaHeuristicScanner.NOT_FOUND)
             return firstPeer
           firstPeer = peer
-          // keep searching
+        // keep searching
         case Symbols.TokenCASE | Symbols.TokenDEFAULT =>
           val indenter = createIndenter(document, pScanner)
           val peer = indenter.findReferencePosition(dPos, false, false, false, true, false)
           if (peer == JavaHeuristicScanner.NOT_FOUND)
             return firstPeer
           firstPeer = peer
-          // keep searching
+        // keep searching
 
         case Symbols.TokenEOF =>
           return firstPeer
-        
+
         case _ =>
-          // keep searching
+        // keep searching
       }
     }
-    
+
     return 0 // Won't happen
   }
 
-
-  /**
-   * Skips the scope opened by <code>token</code>.
+  /** Skips the scope opened by <code>token</code>.
    *
-   * @param scanner the scanner
-   * @param start the start position
-   * @param token the token
-   * @return the position after the scope or <code>JavaHeuristicScanner.NOT_FOUND</code>
+   *  @param scanner the scanner
+   *  @param start the start position
+   *  @param token the token
+   *  @return the position after the scope or <code>JavaHeuristicScanner.NOT_FOUND</code>
    */
-  private def skipScope(scanner : JavaHeuristicScanner, start : Int, token : Int) : Int = {
+  private def skipScope(scanner: JavaHeuristicScanner, start: Int, token: Int): Int = {
     val openToken = token
     val tokenMap = Map(
-        Symbols.TokenLPAREN -> Symbols.TokenRPAREN,
-        Symbols.TokenLBRACKET -> Symbols.TokenRBRACKET,
-        Symbols.TokenLBRACE -> Symbols.TokenRBRACE
-    )
+      Symbols.TokenLPAREN -> Symbols.TokenRPAREN,
+      Symbols.TokenLBRACKET -> Symbols.TokenRBRACKET,
+      Symbols.TokenLBRACE -> Symbols.TokenRBRACE)
     var closeToken = tokenMap(token)
 
-    var depth= 1
+    var depth = 1
     var p = start
 
     while (true) {
@@ -1084,14 +1041,14 @@ class ScalaAutoIndentStrategy(
     return 0 // Won't happen
   }
 
-  private def isLineDelimiter(document : IDocument, text : String) : Boolean = {
+  private def isLineDelimiter(document: IDocument, text: String): Boolean = {
     val delimiters = document.getLegalLineDelimiters()
     if (delimiters != null)
       return TextUtilities.equals(delimiters, text) > -1
     return false
   }
 
-  private def smartIndentOnKeypress(document : IDocument, command : DocumentCommand) : Unit = {
+  private def smartIndentOnKeypress(document: IDocument, command: DocumentCommand): Unit = {
     command.text.charAt(0) match {
       case '}' =>
         smartIndentAfterClosingBracket(document, command)
@@ -1100,23 +1057,23 @@ class ScalaAutoIndentStrategy(
       case 'e' =>
         smartIndentUponE(document, command)
       case _ =>
-        // Do nothing
+      // Do nothing
     }
   }
 
-  private def smartIndentUponE(d : IDocument, c : DocumentCommand) : Unit = {
+  private def smartIndentUponE(d: IDocument, c: DocumentCommand): Unit = {
     if (c.offset < 4 || d.getLength() == 0)
       return
 
     try {
       val content = d.get(c.offset - 3, 3)
       if (content.equals("els")) {
-        val scanner= new JavaHeuristicScanner(d)
-        val p= c.offset - 3
+        val scanner = new JavaHeuristicScanner(d)
+        val p = c.offset - 3
 
         // current line
-        val line= d.getLineOfOffset(p);
-        val lineOffset= d.getLineOffset(line)
+        val line = d.getLineOfOffset(p);
+        val lineOffset = d.getLineOffset(line)
 
         // make sure we don't have any leading comments etc.
         if (d.get(lineOffset, p - lineOffset).trim().length() != 0)
@@ -1126,7 +1083,7 @@ class ScalaAutoIndentStrategy(
         val pos = scanner.findNonWhitespaceBackward(p - 1, JavaHeuristicScanner.UNBOUND)
         if (pos == -1)
           return
-        val lastLine= d.getLineOfOffset(pos)
+        val lastLine = d.getLineOfOffset(pos)
 
         // only shift if the last java line is further up and is a braceless block candidate
         if (lastLine < line) {
@@ -1164,7 +1121,7 @@ class ScalaAutoIndentStrategy(
         val pos = scanner.findNonWhitespaceBackward(p - 1, JavaHeuristicScanner.UNBOUND)
         if (pos == -1)
           return
-        val lastLine= d.getLineOfOffset(pos)
+        val lastLine = d.getLineOfOffset(pos)
 
         // only shift if the last java line is further up and is a braceless block candidate
         if (lastLine < line) {
@@ -1173,8 +1130,8 @@ class ScalaAutoIndentStrategy(
           val ref = indenter.findReferencePosition(p, false, false, false, true, false)
           if (ref == JavaHeuristicScanner.NOT_FOUND)
             return
-          val refLine= d.getLineOfOffset(ref)
-          val nextToken= scanner.nextToken(ref, JavaHeuristicScanner.UNBOUND)
+          val refLine = d.getLineOfOffset(ref)
+          val nextToken = scanner.nextToken(ref, JavaHeuristicScanner.UNBOUND)
           val indent =
             if (nextToken == Symbols.TokenCASE || nextToken == Symbols.TokenDEFAULT)
               getIndentOfLine(d, refLine)
@@ -1192,17 +1149,16 @@ class ScalaAutoIndentStrategy(
       }
 
     } catch {
-      case e : BadLocationException =>
+      case e: BadLocationException =>
         JavaPlugin.log(e)
     }
   }
 
-  
   /*
    * @see org.eclipse.jface.text.IAutoIndentStrategy#customizeDocumentCommand(org.eclipse.jface.text.IDocument, org.eclipse.jface.text.DocumentCommand)
    */
-  override def customizeDocumentCommand(d : IDocument, c : DocumentCommand) : Unit = {
-    
+  override def customizeDocumentCommand(d: IDocument, c: DocumentCommand): Unit = {
+
     if (c.doit == false)
       return
 
@@ -1226,15 +1182,13 @@ class ScalaAutoIndentStrategy(
 
   }
 
-  
-  /**
-   * Tells whether the given inserted string represents hitting the Tab key.
+  /** Tells whether the given inserted string represents hitting the Tab key.
    *
-   * @param text the text to check
-   * @return <code>true</code> if the text represents hitting the Tab key
-   * @since 3.5
+   *  @param text the text to check
+   *  @return <code>true</code> if the text represents hitting the Tab key
+   *  @since 3.5
    */
-  private def isRepresentingTab(text : String) : Boolean = {
+  private def isRepresentingTab(text: String): Boolean = {
     if (text == null)
       return false
 
@@ -1252,14 +1206,14 @@ class ScalaAutoIndentStrategy(
 
   private def getPreferenceStore = JavaPlugin.getDefault().getCombinedPreferenceStore()
 
-  private def closeBrace : Boolean = fCloseBrace
+  private def closeBrace: Boolean = fCloseBrace
 
-  private def clearCachedValues : Unit = { 
+  private def clearCachedValues: Unit = {
     preferencesProvider.updateCache
     fIsSmartMode = computeSmartMode
   }
 
-  protected def computeSmartMode : Boolean = {
+  protected def computeSmartMode: Boolean = {
     val page = JavaPlugin.getActivePage()
     if (page != null) {
       val part = page.getActiveEditor()
@@ -1271,7 +1225,7 @@ class ScalaAutoIndentStrategy(
     return false
   }
 
-  private def getCompilationUnitForMethod(document : IDocument, offset : Int) : CompilationUnitInfo = {
+  private def getCompilationUnitForMethod(document: IDocument, offset: Int): CompilationUnitInfo = {
     try {
       val scanner = new JavaHeuristicScanner(document)
 
@@ -1291,25 +1245,23 @@ class ScalaAutoIndentStrategy(
       return new CompilationUnitInfo(buffer, sourceRange.getOffset() - methodOffset)
 
     } catch {
-      case e : BadLocationException =>
+      case e: BadLocationException =>
         JavaPlugin.log(e)
     }
 
     return null
   }
-    
 
-  /**
-   * Returns the block balance, i.e. zero if the blocks are balanced at <code>offset</code>, a
-   * negative number if there are more closing than opening braces, and a positive number if there
-   * are more opening than closing braces.
-   * 
-   * @param document the document
-   * @param offset the offset
-   * @param partitioning the partitioning
-   * @return the block balance
+  /** Returns the block balance, i.e. zero if the blocks are balanced at <code>offset</code>, a
+   *  negative number if there are more closing than opening braces, and a positive number if there
+   *  are more opening than closing braces.
+   *
+   *  @param document the document
+   *  @param offset the offset
+   *  @param partitioning the partitioning
+   *  @return the block balance
    */
-  private def getBlockBalance(document : IDocument, offset : Int, partitioning : String) : Int = {
+  private def getBlockBalance(document: IDocument, offset: Int, partitioning: String): Int = {
     if (offset < 1)
       return -1
     if (offset >= document.getLength())
@@ -1330,39 +1282,39 @@ class ScalaAutoIndentStrategy(
       if (end == -1)
         return 1
     }
-    
+
     return 0 // Just needed to keep the compiler happy
   }
 
-  private def createRegion(node : ASTNode, delta : Int) : IRegion = {
-    if (node == null) 
-      return null 
+  private def createRegion(node: ASTNode, delta: Int): IRegion = {
+    if (node == null)
+      return null
     else
       return new Region(node.getStartPosition() + delta, node.getLength())
   }
 
-  private def getToken(document : IDocument, scanRegion : IRegion, tokenId : Int) : IRegion = {
+  private def getToken(document: IDocument, scanRegion: IRegion, tokenId: Int): IRegion = {
 
     try {
       val source = document.get(scanRegion.getOffset(), scanRegion.getLength())
 
       fgScanner.setSource(source.toCharArray())
 
-      var id= fgScanner.getNextToken()
+      var id = fgScanner.getNextToken()
       while (id != ITerminalSymbols.TokenNameEOF && id != tokenId)
         id = fgScanner.getNextToken()
 
       if (id == ITerminalSymbols.TokenNameEOF)
         return null
 
-      val tokenOffset= fgScanner.getCurrentTokenStartPosition()
-      val tokenLength= fgScanner.getCurrentTokenEndPosition() + 1 - tokenOffset // inclusive end
+      val tokenOffset = fgScanner.getCurrentTokenStartPosition()
+      val tokenLength = fgScanner.getCurrentTokenEndPosition() + 1 - tokenOffset // inclusive end
       return new Region(tokenOffset + scanRegion.getOffset(), tokenLength)
 
     } catch {
-      case e : InvalidInputException =>
+      case e: InvalidInputException =>
         return null
-      case e : BadLocationException =>
+      case e: BadLocationException =>
         return null
     }
   }

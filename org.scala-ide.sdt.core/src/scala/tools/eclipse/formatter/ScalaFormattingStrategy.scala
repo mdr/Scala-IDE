@@ -40,7 +40,7 @@ class ScalaFormattingStrategy(val editor: ITextEditor) extends IFormattingStrate
 
     val (offset, length) = expandToWholeLines(regionOpt match {
       case Some(region) => (region.getOffset, region.getLength)
-      case None => (0, document.getLength)
+      case None         => (0, document.getLength)
     })
     val formattingRegion = new Position(offset, length)
 
