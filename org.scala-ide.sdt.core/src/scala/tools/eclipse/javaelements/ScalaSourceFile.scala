@@ -6,7 +6,6 @@
 package scala.tools.eclipse.javaelements
 
 import java.util.{ HashMap => JHashMap, Map => JMap }
-
 import org.eclipse.core.resources.{ IFile, IResource }
 import org.eclipse.core.runtime.IProgressMonitor
 import org.eclipse.jdt.core.{ IBuffer, ICompilationUnit, IJavaElement, IType, WorkingCopyOwner }
@@ -15,12 +14,10 @@ import org.eclipse.jdt.internal.core.util.HandleFactory
 import org.eclipse.jdt.internal.core.{ BufferManager, CompilationUnit => JDTCompilationUnit, OpenableElementInfo, PackageFragment }
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil
 import org.eclipse.swt.widgets.Display
-
 import scala.tools.nsc.io.{ AbstractFile, VirtualFile }
-
 import scala.tools.eclipse.contribution.weaving.jdt.IScalaSourceFile
-
 import scala.tools.eclipse.util.EclipseFile
+import scala.tools.eclipse.reconciliation.ReconciliationParticipantsExtensionPoint
 
 object ScalaSourceFile {
   val handleFactory = new HandleFactory
@@ -50,8 +47,11 @@ class ScalaSourceFile(fragment : PackageFragment, elementName: String, workingCo
       astLevel : Int,
       reconcileFlags : Int,
       workingCopyOwner : WorkingCopyOwner,
-      monitor : IProgressMonitor) : org.eclipse.jdt.core.dom.CompilationUnit = {
-    super.reconcile(ICompilationUnit.NO_AST, reconcileFlags, workingCopyOwner, monitor)
+      monitor : IProgressMonitor) : org.eclipse.jdt.core.dom.CompilationUnit = {    
+    ReconciliationParticipantsExtensionPoint.runBefore(this, monitor, workingCopyOwner)
+    val result = super.reconcile(ICompilationUnit.NO_AST, reconcileFlags, workingCopyOwner, monitor)
+    ReconciliationParticipantsExtensionPoint.runAfter(this, monitor, workingCopyOwner)
+    result
   }
 
   override def makeConsistent(
