@@ -34,8 +34,8 @@ import org.eclipse.jface.action.Action
 import org.eclipse.jface.action.MenuManager
 import org.eclipse.jface.action.IContributionItem
 import org.eclipse.jface.action.Separator
-
 import scala.tools.eclipse.semantichighlighting._
+import org.eclipse.ui.texteditor.SourceViewerDecorationSupport
 
 class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
 

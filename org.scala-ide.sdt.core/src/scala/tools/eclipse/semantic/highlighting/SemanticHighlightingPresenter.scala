@@ -22,8 +22,7 @@ import org.eclipse.ui.{ PlatformUI, IPartListener, IWorkbenchPart }
 import org.eclipse.ui.part.FileEditorInput
 import scala.collection._
 import scala.tools.eclipse.javaelements.ScalaCompilationUnit
-import scala.tools.eclipse.ui.preferences.PropertyChangeListenerProxy
-import scala.tools.eclipse.util.{ ColorManager, Annotations, AnnotationsTypes }
+import scala.tools.eclipse.semantichighlighting.SymbolClassifier
 
 /**
  * This class is instantiated by the reconciliationParticipants extension point and
@@ -101,7 +100,7 @@ object SemanticHighlightingReconciliation {
     val firstTimeReconciliation = !participants.contains(scu)
 
     if (firstTimeReconciliation) {
-      createSemanticHighlighterForEditor(scu) foreach {
+      createSemantigHighlighterForEditor(scu) foreach {
         case (presenter, styler) =>
           participants(scu) = presenter
           symbolStylers(scu) = styler
