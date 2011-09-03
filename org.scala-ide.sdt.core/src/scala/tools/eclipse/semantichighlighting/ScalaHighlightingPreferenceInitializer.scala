@@ -12,15 +12,14 @@ class ScalaHighlightingPreferenceInitializer extends AbstractPreferenceInitializ
 
   def initializeDefaultPreferences() =
     ScalaPlugin.plugin.check {
-      val preferenceStore = JavaPlugin.getDefault.getPreferenceStore
-
-      preferenceStore.setDefault(SymbolAnnotations.TEXT_PREFERENCE_KEY, true)
-      
-      for (annotationInfo <- SymbolAnnotations.allSymbolAnnotations.values) {
-        val colour = annotationInfo.defaultColour
-        val colourPrefString = colour.getRed + "," + colour.getGreen + "," + colour.getBlue 
-        preferenceStore.setDefault(annotationInfo.colourPreferenceKey, colourPrefString)
-        preferenceStore.setDefault(annotationInfo.stylePreferenceKey, SymbolAnnotations.FOREGROUND_COLOUR_STYLE)
-      }
+      //      val javaPrefStore = JavaPlugin.getDefault.getPreferenceStore
+      //      javaPrefStore.setDefault(SymbolAnnotations.TEXT_PREFERENCE_KEY, true)
+      //
+      //      for (annotationInfo <- SymbolAnnotations.allSymbolAnnotations.values) {
+      ////        val colour = annotationInfo.defaultColour 
+      ////        val colourPrefString = colour.getRed + "," + colour.getGreen + "," + colour.getBlue
+      ////        preferenceStore.setDefault(annotationInfo.colourPreferenceKey, colourPrefString)
+      //        preferenceStore.setDefault(annotationInfo.stylePreferenceKey, SymbolAnnotations.FOREGROUND_COLOUR_STYLE)
+      //      }
     }
 }

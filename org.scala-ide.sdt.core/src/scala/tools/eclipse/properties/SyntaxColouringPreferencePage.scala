@@ -123,17 +123,6 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
 
   object TreeContentAndLabelProvider extends LabelProvider with ITreeContentProvider {
 
-    case class Category(name: String, children: List[ScalaSyntaxClass])
-
-    val scalaCategory = Category("Scala", List(BRACKET, KEYWORD, RETURN, MULTI_LINE_STRING, OPERATOR, DEFAULT, STRING))
-
-    val commentsCategory = Category("Comments", List(SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, SCALADOC))
-
-    val xmlCategory = Category("XML", List(XML_ATTRIBUTE_EQUALS, XML_ATTRIBUTE_NAME, XML_ATTRIBUTE_VALUE,
-      XML_CDATA_BORDER, XML_COMMENT, XML_TAG_DELIMITER, XML_TAG_NAME, XML_PI))
-
-    val categories = List(scalaCategory, commentsCategory, xmlCategory)
-
     def getElements(inputElement: AnyRef) = categories.toArray
 
     def getChildren(parentElement: AnyRef) = parentElement match {
@@ -141,14 +130,7 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
       case _ => Array()
     }
 
-    def getParent(element: AnyRef): Category = {
-      for {
-        category <- categories
-        child <- category.children
-        if (child == element)
-      } return category
-      null
-    }
+    def getParent(element: AnyRef): Category = categories.find(_.children contains element).orNull
 
     def hasChildren(element: AnyRef) = getChildren(element).nonEmpty
 
@@ -324,7 +306,7 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
         overlayStore.setValue(syntaxClass.strikethroughKey, strikethroughCheckBox.getSelection)
     }
 
-    treeViewer.setSelection(new StructuredSelection(TreeContentAndLabelProvider.scalaCategory))
+    treeViewer.setSelection(new StructuredSelection(scalaCategory))
 
     outerComposite.layout(false)
     outerComposite

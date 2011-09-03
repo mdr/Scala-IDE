@@ -3,6 +3,11 @@ package scala.tools.eclipse.semantichighlighting
 import scala.tools.eclipse.util.Colors
 import org.eclipse.swt.graphics.Color
 import org.eclipse.ui.texteditor.AnnotationPreference
+import SymbolAnnotations._
+import scala.tools.eclipse.properties.ScalaSyntaxClass
+import scala.tools.eclipse.properties.ScalaSyntaxClasses
+import scala.tools.eclipse.ScalaPlugin
+import org.eclipse.jdt.internal.ui.JavaPlugin
 
 object SymbolAnnotations {
 
@@ -19,28 +24,28 @@ object SymbolAnnotations {
     TemplateVar -> TemplateVarAnnotation,
     TemplateVal -> TemplateValAnnotation,
     Method -> MethodAnnotation,
-    MethodParam -> MethodParamAnnotation,
-    Other -> OtherAnnotation)
+    MethodParam -> MethodParamAnnotation)
 }
 
-import SymbolAnnotations._
-
-abstract class AnnotationInfo(name: String, val defaultColour: Color) {
+abstract class AnnotationInfo(name: String, val syntaxClass: ScalaSyntaxClass) {
 
   val annotationId = PREFIX + "." + name
 
-  val colourPreferenceKey = annotationId + ".colour"
+  val defaultColour = syntaxClass.getTextAttribute(JavaPlugin.getDefault.getJavaTextTools.getColorManager,
+    ScalaPlugin.plugin.getPreferenceStore).getForeground
+
+  val colourPreferenceKey = syntaxClass.colourKey
 
   val stylePreferenceKey = annotationId + ".style"
 
-  val annotationPreference = new AnnotationPreferenceWithForegroundColourStyle(annotationId, colourPreferenceKey, SymbolAnnotations.TEXT_PREFERENCE_KEY, stylePreferenceKey)
+  val annotationPreference = new AnnotationPreferenceWithForegroundColourStyle(annotationId, colourPreferenceKey,
+    SymbolAnnotations.TEXT_PREFERENCE_KEY, stylePreferenceKey)
 
 }
 
-object LocalValAnnotation extends AnnotationInfo("localVal", Colors.ocean)
-object LocalVarAnnotation extends AnnotationInfo("localVar", Colors.cayenne)
-object TemplateValAnnotation extends AnnotationInfo("templateVal", Colors.rgb(0, 0, 192))
-object TemplateVarAnnotation extends AnnotationInfo("templateVar", Colors.salmon)
-object MethodAnnotation extends AnnotationInfo("method", Colors.iron)
-object MethodParamAnnotation extends AnnotationInfo("methodParam", Colors.eggplant)
-object OtherAnnotation extends AnnotationInfo("other", Colors.black)
+object LocalValAnnotation extends AnnotationInfo("localVal", ScalaSyntaxClasses.LOCAL_VAL)
+object LocalVarAnnotation extends AnnotationInfo("localVar", ScalaSyntaxClasses.LOCAL_VAR)
+object TemplateValAnnotation extends AnnotationInfo("templateVal", ScalaSyntaxClasses.TEMPLATE_VAL)
+object TemplateVarAnnotation extends AnnotationInfo("templateVar", ScalaSyntaxClasses.TEMPLATE_VAR)
+object MethodAnnotation extends AnnotationInfo("method", ScalaSyntaxClasses.METHOD)
+object MethodParamAnnotation extends AnnotationInfo("methodParam", ScalaSyntaxClasses.METHOD_PARAM)

@@ -1,4 +1,5 @@
 package scala.tools.eclipse.properties
+
 import org.eclipse.jdt.ui.PreferenceConstants._
 import org.eclipse.jdt.ui.text.IJavaColorConstants._
 
@@ -24,14 +25,40 @@ object ScalaSyntaxClasses {
   val XML_PI = ScalaSyntaxClass("Processing instructions", "syntaxColouring.xml.processingInstruction")
   val XML_CDATA_BORDER = ScalaSyntaxClass("CDATA delimiters", "syntaxColouring.xml.cdata")
 
-  val ALL_SYNTAX_CLASSES = List(SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, SCALADOC, OPERATOR, KEYWORD, RETURN,
-    STRING, MULTI_LINE_STRING, BRACKET, DEFAULT, XML_ATTRIBUTE_NAME, XML_ATTRIBUTE_VALUE, XML_ATTRIBUTE_EQUALS,
-    XML_CDATA_BORDER, XML_COMMENT, XML_TAG_DELIMITER, XML_TAG_NAME, XML_PI)
+  val LOCAL_VAL = ScalaSyntaxClass("Local val", "syntaxColouring.semantic.localVal")
+  val LOCAL_VAR = ScalaSyntaxClass("Local var", "syntaxColouring.semantic.localVar")
+  val TEMPLATE_VAL = ScalaSyntaxClass("Template val", "syntaxColouring.semantic.templateVal")
+  val TEMPLATE_VAR = ScalaSyntaxClass("Template var", "syntaxColouring.semantic.templateVar")
+  val METHOD = ScalaSyntaxClass("Method", "syntaxColouring.semantic.method")
+  val METHOD_PARAM = ScalaSyntaxClass("Method parameter", "syntaxColouring.semantic.methodParam")
+
+  case class Category(name: String, children: List[ScalaSyntaxClass])
+
+  val scalaCategory = Category("Scala", List(
+    BRACKET, KEYWORD, LOCAL_VAL, LOCAL_VAR, RETURN, METHOD, METHOD_PARAM, MULTI_LINE_STRING, OPERATOR,
+    TEMPLATE_VAL, TEMPLATE_VAR, DEFAULT, STRING))
+
+  val commentsCategory = Category("Comments", List(
+    SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, SCALADOC))
+
+  val xmlCategory = Category("XML", List(
+    XML_ATTRIBUTE_NAME, XML_ATTRIBUTE_VALUE, XML_ATTRIBUTE_EQUALS, XML_CDATA_BORDER, XML_COMMENT, XML_TAG_DELIMITER, XML_TAG_NAME, XML_PI))
+
+  val categories = List(scalaCategory, commentsCategory, xmlCategory)
+
+  val ALL_SYNTAX_CLASSES = categories.flatMap(_.children)
 
   val COLOUR_SUFFIX = ".colour"
   val BOLD_SUFFIX = ".bold"
   val ITALIC_SUFFIX = ".italic"
   val STRIKETHROUGH_SUFFIX = ".strikethrough"
   val UNDERLINE_SUFFIX = ".underline"
+
+  val ALL_SUFFIXES = List(COLOUR_SUFFIX, BOLD_SUFFIX, ITALIC_SUFFIX, STRIKETHROUGH_SUFFIX, UNDERLINE_SUFFIX)
+
+  val ALL_KEYS = (for {
+    syntaxClass <- ALL_SYNTAX_CLASSES
+    suffix <- ALL_SUFFIXES
+  } yield syntaxClass.baseName + suffix).toSet
 
 }
