@@ -30,18 +30,25 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.tools.eclipse.javaelements.{ ScalaSourceFile, ScalaCompilationUnit }
 import scala.tools.eclipse.markoccurrences.{ ScalaOccurrencesFinder, Occurrences }
+import scala.tools.eclipse.semantichighlighting._
+import scala.tools.eclipse.properties.ScalaSyntaxClass
+import scala.tools.eclipse.util.SWTUtils._
 import org.eclipse.jface.action.Action
 import org.eclipse.jface.action.MenuManager
 import org.eclipse.jface.action.IContributionItem
 import org.eclipse.jface.action.Separator
-import scala.tools.eclipse.semantichighlighting._
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport
+import org.eclipse.jdt.internal.ui.JavaPlugin
+import org.eclipse.swt.SWT
 
 class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
 
   import ScalaSourceFileEditor._
 
   setPartName("Scala Editor")
+
+  def scalaPrefStore = ScalaPlugin.plugin.getPreferenceStore
+  def javaPrefStore = getPreferenceStore
 
   override protected def createActions() {
     super.createActions()
@@ -88,13 +95,13 @@ class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
   }
 
   override def createJavaSourceViewerConfiguration: JavaSourceViewerConfiguration =
-    new ScalaSourceViewerConfiguration(getPreferenceStore, ScalaPlugin.plugin.getPreferenceStore, this)
+    new ScalaSourceViewerConfiguration(javaPrefStore, scalaPrefStore, this)
 
   override def setSourceViewerConfiguration(configuration: SourceViewerConfiguration) {
     super.setSourceViewerConfiguration(
       configuration match {
         case svc: ScalaSourceViewerConfiguration => svc
-        case _ => new ScalaSourceViewerConfiguration(getPreferenceStore, ScalaPlugin.plugin.getPreferenceStore, this)
+        case _ => new ScalaSourceViewerConfiguration(javaPrefStore, scalaPrefStore, this)
       })
   }
 
@@ -196,17 +203,13 @@ class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
     super.uninstallOccurrencesFinder
   }
 
-  private val preferenceListener = new IPropertyChangeListener() {
-    def propertyChange(event: PropertyChangeEvent) {
-      handlePreferenceStoreChanged(event)
-    }
-  }
+  private val preferenceListener: IPropertyChangeListener = handlePreferenceStoreChanged _
 
-  ScalaPlugin.plugin.getPreferenceStore.addPropertyChangeListener(preferenceListener)
+  scalaPrefStore.addPropertyChangeListener(preferenceListener)
 
   override def dispose() {
     super.dispose()
-    ScalaPlugin.plugin.getPreferenceStore.removePropertyChangeListener(preferenceListener)
+    scalaPrefStore.removePropertyChangeListener(preferenceListener)
   }
 
   override def editorContextMenuAboutToShow(menu: org.eclipse.jface.action.IMenuManager): Unit = {
@@ -275,20 +278,20 @@ class ScalaSourceFileEditor extends CompilationUnitEditor with ScalaEditor {
 
     override protected def createAnnotationPainter(): AnnotationPainter = {
       val annotationPainter = super.createAnnotationPainter
-      annotationPainter.addTextStyleStrategy(SymbolAnnotations.FOREGROUND_COLOUR_STYLE, new ForegroundColourTextStyleStrategy)
+      for (annotationInfo <- SymbolAnnotations.allSymbolAnnotations.values) {
+        val syntaxClass = annotationInfo.syntaxClass
+        annotationPainter.addTextStyleStrategy(syntaxClass.baseName, new ForegroundColourTextStyleStrategy(syntaxClass))
+      }
+
       annotationPainter
     }
-//
-//    override def install(store: IPreferenceStore) {
-//      super.install(ScalaPlugin.plugin.getPreferenceStore)
-//    }
 
   }
 
-  class ForegroundColourTextStyleStrategy extends AnnotationPainter.ITextStyleStrategy {
+  class ForegroundColourTextStyleStrategy(syntaxClass: ScalaSyntaxClass) extends AnnotationPainter.ITextStyleStrategy {
 
     def applyTextStyle(styleRange: StyleRange, annotationColor: Color) {
-      styleRange.foreground = annotationColor
+      syntaxClass.populateStyleRange(styleRange, scalaPrefStore)
     }
 
   }

@@ -1,15 +1,14 @@
 package scala.tools.eclipse.properties
 
-import scala.tools.eclipse.ScalaPreviewerFactory
 import java.util.HashMap
+import org.eclipse.jdt.internal.ui.javaeditor.JavaSourceViewer
 import org.eclipse.jdt.internal.ui.preferences.OverlayPreferenceStore
-import PartialFunction.condOpt
-import org.eclipse.jface.viewers.{ IDoubleClickListener, DoubleClickEvent }
-import scala.tools.eclipse.properties.ScalaSyntaxClasses._
-import org.eclipse.jface.layout.PixelConverter
 import org.eclipse.jdt.internal.ui.preferences.PreferencesMessages
-import scala.tools.eclipse.ScalaPlugin
+import org.eclipse.jdt.internal.ui.preferences.ScrolledPageContent
+import org.eclipse.jdt.ui.PreferenceConstants
 import org.eclipse.jdt.ui.text.IColorManager
+import org.eclipse.jdt.ui.text.IJavaPartitions
+import org.eclipse.jface.layout.PixelConverter
 import org.eclipse.jface.preference.ColorSelector
 import org.eclipse.jface.preference.IPreferenceStore
 import org.eclipse.jface.preference.PreferenceConverter
@@ -18,13 +17,9 @@ import org.eclipse.jface.resource.JFaceResources
 import org.eclipse.jface.text.Document
 import org.eclipse.jface.text.IDocumentPartitioner
 import org.eclipse.jface.text.TextUtilities
-import org.eclipse.jface.viewers.ISelectionChangedListener
-import org.eclipse.jface.viewers.IStructuredSelection
-import org.eclipse.jface.viewers.LabelProvider
-import org.eclipse.jface.viewers.SelectionChangedEvent
-import org.eclipse.jface.viewers.StructuredSelection
-import org.eclipse.jface.viewers.Viewer
-import org.eclipse.jface.viewers.TreeViewer
+import org.eclipse.jface.util.IPropertyChangeListener
+import org.eclipse.jface.util.PropertyChangeEvent
+import org.eclipse.jface.viewers._
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
@@ -44,16 +39,19 @@ import org.eclipse.ui.IWorkbenchPreferencePage
 import org.eclipse.ui.dialogs.PreferencesUtil
 import org.eclipse.ui.editors.text.EditorsUI
 import org.eclipse.ui.texteditor.ChainedPreferenceStore
-import org.eclipse.jdt.internal.ui.preferences.ScrolledPageContent
-import org.eclipse.jface.viewers.ITreeContentProvider
-import org.eclipse.jdt.internal.ui.javaeditor.JavaSourceViewer
-import org.eclipse.jdt.ui.PreferenceConstants
-import scala.tools.eclipse.lexical.ScalaDocumentPartitioner
+import scala.PartialFunction.condOpt
+import scala.tools.eclipse.ScalaPlugin
+import scala.tools.eclipse.ScalaPreviewerFactory
 import scala.tools.eclipse.ScalaSourceViewerConfiguration
-import org.eclipse.jdt.ui.text.IJavaPartitions
-import org.eclipse.jface.util.IPropertyChangeListener
-import org.eclipse.jface.util.PropertyChangeEvent
+import scala.tools.eclipse.lexical.ScalaDocumentPartitioner
+import scala.tools.eclipse.properties.ScalaSyntaxClasses._
+import scala.tools.eclipse.util.EclipseUtils.SelectedItems
 import scala.tools.eclipse.util.SWTUtils._
+import scalariform.lexer.ScalaLexer
+import scalariform.lexer.Token
+import org.eclipse.jface.text.source.SourceViewer
+import org.eclipse.jdt.internal.ui.JavaPlugin
+import org.eclipse.swt.custom.StyleRange
 
 /**
  * @see org.eclipse.jdt.internal.ui.preferences.JavaEditorColoringConfigurationBlock
@@ -66,11 +64,13 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
 
   private var colorEditorLabel: Label = _
   private var syntaxForegroundColorEditor: ColorSelector = _
+  private var enabledCheckBox: Button = _
   private var boldCheckBox: Button = _
   private var italicCheckBox: Button = _
   private var underlineCheckBox: Button = _
   private var strikethroughCheckBox: Button = _
   private var treeViewer: TreeViewer = _
+  private var previewer: SourceViewer = _
 
   def init(workbench: IWorkbench) {}
 
@@ -94,6 +94,7 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     import OverlayPreferenceStore._
     val keys = ALL_SYNTAX_CLASSES.flatMap { syntaxClass =>
       List(
+        new OverlayKey(BOOLEAN, syntaxClass.enabledKey),
         new OverlayKey(STRING, syntaxClass.colourKey),
         new OverlayKey(BOOLEAN, syntaxClass.boldKey),
         new OverlayKey(BOOLEAN, syntaxClass.italicKey),
@@ -138,7 +139,7 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
 
     override def getText(element: AnyRef) = element match {
       case Category(name, _) => name
-      case ScalaSyntaxClass(displayName, _) => displayName
+      case ScalaSyntaxClass(displayName, _, _) => displayName
     }
   }
 
@@ -242,6 +243,11 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     stylesComposite.setLayout(gridLayout(marginHeight = 0, marginWidth = 0, numColumns = 2))
     stylesComposite.setLayoutData(new GridData(GridData.FILL_BOTH))
 
+    enabledCheckBox = new Button(stylesComposite, SWT.CHECK)
+    enabledCheckBox.setText(PreferencesMessages.JavaEditorPreferencePage_enable)
+    enabledCheckBox.setLayoutData(gridData(
+      horizontalAlignment = GridData.BEGINNING, horizontalIndent = 0, horizontalSpan = 2))
+
     colorEditorLabel = new Label(stylesComposite, SWT.LEFT)
     colorEditorLabel.setText(PreferencesMessages.JavaEditorPreferencePage_color)
 
@@ -276,15 +282,24 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     previewLabel.setText(PreferencesMessages.JavaEditorPreferencePage_preview)
     previewLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL))
 
-    val previewer = createPreviewer(outerComposite)
-    previewer.setLayoutData(gridData(
+    previewer = createPreviewer(outerComposite)
+    val previewerControl = previewer.getControl
+    previewerControl.setLayoutData(gridData(
       horizontalAlignment = GridData.FILL,
       verticalAlignment = GridData.FILL,
       grabExcessHorizontalSpace = true,
       grabExcessVerticalSpace = true,
       widthHint = convertWidthInCharsToPixels(20),
       heightHint = convertHeightInCharsToPixels(5)))
+    updatePreviewerColours()
+    overlayStore.addPropertyChangeListener { event: PropertyChangeEvent =>
+      updatePreviewerColours()
+    }
 
+    enabledCheckBox.addSelectionListener {
+      for (syntaxClass <- selectedSyntaxClass)
+        overlayStore.setValue(syntaxClass.enabledKey, enabledCheckBox.getSelection)
+    }
     foregroundColorButton.addSelectionListener {
       for (syntaxClass <- selectedSyntaxClass)
         PreferenceConverter.setValue(overlayStore, syntaxClass.colourKey, syntaxForegroundColorEditor.getColorValue)
@@ -312,16 +327,15 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     outerComposite
   }
 
-  private def createPreviewer(parent: Composite): Control =
-    ScalaPreviewerFactory.createPreviewer(parent, overlayStore, previewText).getControl
+  private def createPreviewer(parent: Composite): SourceViewer =
+    ScalaPreviewerFactory.createPreviewer(parent, overlayStore, previewText)
 
-  private def selectedSyntaxClass: Option[ScalaSyntaxClass] =
-    condOpt(treeViewer.getSelection.asInstanceOf[IStructuredSelection].getFirstElement) {
-      case syntaxClass: ScalaSyntaxClass => syntaxClass
-    }
+  private def selectedSyntaxClass: Option[ScalaSyntaxClass] = condOpt(treeViewer.getSelection) {
+    case SelectedItems(syntaxClass: ScalaSyntaxClass) => syntaxClass
+  }
 
   private def massSetEnablement(enabled: Boolean) =
-    List(syntaxForegroundColorEditor.getButton, colorEditorLabel, boldCheckBox, italicCheckBox,
+    List(enabledCheckBox, syntaxForegroundColorEditor.getButton, colorEditorLabel, boldCheckBox, italicCheckBox,
       strikethroughCheckBox, underlineCheckBox) foreach { _.setEnabled(enabled) }
 
   private def handleSyntaxColorListSelection() = selectedSyntaxClass match {
@@ -330,24 +344,38 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     case Some(syntaxClass) =>
       val rgb = PreferenceConverter.getColor(overlayStore, syntaxClass.colourKey)
       syntaxForegroundColorEditor.setColorValue(rgb)
+      enabledCheckBox.setSelection(overlayStore.getBoolean(syntaxClass.enabledKey))
       boldCheckBox.setSelection(overlayStore.getBoolean(syntaxClass.boldKey))
       italicCheckBox.setSelection(overlayStore.getBoolean(syntaxClass.italicKey))
       strikethroughCheckBox.setSelection(overlayStore.getBoolean(syntaxClass.strikethroughKey))
       underlineCheckBox.setSelection(overlayStore.getBoolean(syntaxClass.underlineKey))
       massSetEnablement(true)
+      enabledCheckBox.setEnabled(syntaxClass.canBeDisabled)
+  }
+
+  private def updatePreviewerColours() {
+    val textWidget = previewer.getTextWidget
+    for (ColouringLocation(syntaxClass, offset, length) <- semanticLocations) {
+      val styleRange = syntaxClass.getStyleRange(overlayStore)
+      styleRange.start = offset
+      styleRange.length = length
+      textWidget.setStyleRange(styleRange)
+    }
   }
 
 }
 
 object SyntaxColouringPreferencePage {
 
-  val previewText = """/** Scaladoc */
+  private val previewText = """/** Scaladoc */
 class ClassName {
-  def method(arg: String): Int = {
+  val n = 42
+  var m = 24
+  def method(param: String): Int = {
     // Single-line comment
     /* Multi-line comment */
     val s = "foo" + """ + "\"\"\"" + "multiline string" + "\"\"\"" + """
-    val xml =
+    var xml =
       <tag attributeName="value">
         <!-- XML comment -->
         <?processinginstruction?>
@@ -358,4 +386,26 @@ class ClassName {
   }
 }"""
 
+  private case class ColouringLocation(syntaxClass: ScalaSyntaxClass, offset: Int, length: Int)
+
+  private val semanticLocations: List[ColouringLocation] = {
+
+    val identifierToSyntaxClass = Map(
+      "method" -> METHOD,
+      "param" -> METHOD_PARAM,
+      "s" -> LOCAL_VAL,
+      "xml" -> LOCAL_VAR,
+      "n" -> TEMPLATE_VAL,
+      "m" -> TEMPLATE_VAR)
+
+    val identifierLocations: Map[String, (Int, Int)] = {
+      for (token <- ScalaLexer.rawTokenise(previewText, forgiveErrors = true) if token.tokenType.isId)
+        yield (token.text, (token.startIndex, token.length))
+    } toMap
+
+    for {
+      (identifier, syntaxClass) <- identifierToSyntaxClass.toList
+      (offset, length) = identifierLocations(identifier)
+    } yield ColouringLocation(syntaxClass, offset, length)
+  }
 }

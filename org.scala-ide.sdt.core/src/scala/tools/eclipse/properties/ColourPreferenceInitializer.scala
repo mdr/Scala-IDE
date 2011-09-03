@@ -10,6 +10,8 @@ import org.eclipse.jface.resource.StringConverter
 import org.eclipse.jdt.internal.ui.JavaPlugin
 import org.eclipse.swt.graphics.RGB
 import org.eclipse.jface.util.{ IPropertyChangeListener, PropertyChangeEvent }
+import org.eclipse.jface.preference.IPreferenceStore
+import scala.tools.eclipse.util.SWTUtils._
 
 class ColourPreferenceInitializer extends AbstractPreferenceInitializer {
 
@@ -21,6 +23,7 @@ class ColourPreferenceInitializer extends AbstractPreferenceInitializer {
       bold: Boolean = false, italic: Boolean = false, strikethrough: Boolean = false, underline: Boolean = false) =
       {
         val baseName = syntaxClass.baseName
+        scalaPrefStore.setDefault(baseName + ENABLED_SUFFIX, false)
         scalaPrefStore.setDefault(baseName + COLOUR_SUFFIX, StringConverter.asString(rgb))
         scalaPrefStore.setDefault(baseName + BOLD_SUFFIX, bold)
         scalaPrefStore.setDefault(baseName + ITALIC_SUFFIX, italic)
@@ -61,22 +64,26 @@ class ColourPreferenceInitializer extends AbstractPreferenceInitializer {
     javaPrefStore.setDefault(SymbolAnnotations.TEXT_PREFERENCE_KEY, true)
 
     for (annotationInfo <- SymbolAnnotations.allSymbolAnnotations.values)
-      javaPrefStore.setDefault(annotationInfo.stylePreferenceKey, SymbolAnnotations.FOREGROUND_COLOUR_STYLE)
+      javaPrefStore.setDefault(annotationInfo.stylePreferenceKey, annotationInfo.syntaxClass.baseName)
 
+    mirrorColourPreferencesIntoJavaPreferenceStore(scalaPrefStore, javaPrefStore)
+  }
+
+  // Mirror across the colour preferences into the Java preference store so that they can be read by the annotation
+  // mechanism.
+  private def mirrorColourPreferencesIntoJavaPreferenceStore(scalaPrefStore: IPreferenceStore, javaPrefStore: IPreferenceStore) {
     for (key <- ALL_KEYS) {
       val value = scalaPrefStore.getDefaultString(key)
-      println("Copying default value of " + key + " to Java preference store: " + value)
       javaPrefStore.setDefault(key, value)
     }
 
-    scalaPrefStore.addPropertyChangeListener(new IPropertyChangeListener {
-      def propertyChange(event: PropertyChangeEvent) {
-        val key = event.getProperty
+    scalaPrefStore.addPropertyChangeListener { event: PropertyChangeEvent =>
+      val key = event.getProperty
+      if (ALL_KEYS contains key) {
         val value = event.getNewValue
-        println("Syncing across " + key + " to Java preference store: " + value)
         javaPrefStore.setValue(key, value.toString)
       }
-    })
+    }
 
   }
 

@@ -26,6 +26,6 @@ trait AbstractScalaScanner extends ITokenScanner {
     for ((syntaxClass, token) <- tokens)
       token.setData(getTextAttribute(syntaxClass))
 
-  private def getTextAttribute(syntaxClass: ScalaSyntaxClass) = syntaxClass.getTextAttribute(colorManager, preferenceStore)
+  private def getTextAttribute(syntaxClass: ScalaSyntaxClass) = syntaxClass.getTextAttribute(preferenceStore)
 
 }

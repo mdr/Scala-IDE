@@ -31,8 +31,7 @@ abstract class AnnotationInfo(name: String, val syntaxClass: ScalaSyntaxClass) {
 
   val annotationId = PREFIX + "." + name
 
-  val defaultColour = syntaxClass.getTextAttribute(JavaPlugin.getDefault.getJavaTextTools.getColorManager,
-    ScalaPlugin.plugin.getPreferenceStore).getForeground
+  val defaultColour = syntaxClass.getTextAttribute(ScalaPlugin.plugin.getPreferenceStore).getForeground
 
   val colourPreferenceKey = syntaxClass.colourKey
 

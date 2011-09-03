@@ -1,14 +1,16 @@
 package scala.tools.eclipse.util
 
 import org.eclipse.text.edits.{ TextEdit => EclipseTextEdit, _ }
-import scalariform.utils.TextEdit
 import org.eclipse.jface.text.IDocumentExtension4
 import org.eclipse.jface.text.IDocument
+import org.eclipse.jface.viewers.ISelection
 import org.eclipse.core.runtime.IAdaptable
-import PartialFunction._
 import org.eclipse.core.resources.IWorkspace
 import org.eclipse.core.runtime.IProgressMonitor
 import org.eclipse.core.resources.IWorkspaceRunnable
+import scala.PartialFunction._
+import scalariform.utils.TextEdit
+import org.eclipse.jface.viewers.IStructuredSelection
 
 object EclipseUtils {
 
@@ -32,8 +34,9 @@ object EclipseUtils {
 
   implicit def asEclipseTextEdit(edit: TextEdit): EclipseTextEdit = new ReplaceEdit(edit.position, edit.length, edit.replacement)
 
-  /** Run the given function as a workspace runnable inside `wspace`.
-   * 
+  /**
+   * Run the given function as a workspace runnable inside `wspace`.
+   *
    * @param wspace the workspace
    * @param monitor the progress monitor (defaults to null for no progress monitor).
    */
@@ -44,4 +47,11 @@ object EclipseUtils {
       }
     }, monitor)
   }
+
+  object SelectedItems {
+    def unapplySeq(selection: ISelection): Option[List[Any]] = condOpt(selection) {
+      case structuredSelection: IStructuredSelection => structuredSelection.toArray.toList
+    }
+  }
+
 }

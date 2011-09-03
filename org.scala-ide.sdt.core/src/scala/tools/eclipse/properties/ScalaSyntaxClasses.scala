@@ -25,12 +25,12 @@ object ScalaSyntaxClasses {
   val XML_PI = ScalaSyntaxClass("Processing instructions", "syntaxColouring.xml.processingInstruction")
   val XML_CDATA_BORDER = ScalaSyntaxClass("CDATA delimiters", "syntaxColouring.xml.cdata")
 
-  val LOCAL_VAL = ScalaSyntaxClass("Local val", "syntaxColouring.semantic.localVal")
-  val LOCAL_VAR = ScalaSyntaxClass("Local var", "syntaxColouring.semantic.localVar")
-  val TEMPLATE_VAL = ScalaSyntaxClass("Template val", "syntaxColouring.semantic.templateVal")
-  val TEMPLATE_VAR = ScalaSyntaxClass("Template var", "syntaxColouring.semantic.templateVar")
-  val METHOD = ScalaSyntaxClass("Method", "syntaxColouring.semantic.method")
-  val METHOD_PARAM = ScalaSyntaxClass("Method parameter", "syntaxColouring.semantic.methodParam")
+  val LOCAL_VAL = ScalaSyntaxClass("Local val", "syntaxColouring.semantic.localVal", canBeDisabled = true)
+  val LOCAL_VAR = ScalaSyntaxClass("Local var", "syntaxColouring.semantic.localVar", canBeDisabled = true)
+  val TEMPLATE_VAL = ScalaSyntaxClass("Template val", "syntaxColouring.semantic.templateVal", canBeDisabled = true)
+  val TEMPLATE_VAR = ScalaSyntaxClass("Template var", "syntaxColouring.semantic.templateVar", canBeDisabled = true)
+  val METHOD = ScalaSyntaxClass("Method", "syntaxColouring.semantic.method", canBeDisabled = true)
+  val METHOD_PARAM = ScalaSyntaxClass("Method parameter", "syntaxColouring.semantic.methodParam", canBeDisabled = true)
 
   case class Category(name: String, children: List[ScalaSyntaxClass])
 
@@ -48,13 +48,14 @@ object ScalaSyntaxClasses {
 
   val ALL_SYNTAX_CLASSES = categories.flatMap(_.children)
 
+  val ENABLED_SUFFIX = ".enabled"
   val COLOUR_SUFFIX = ".colour"
   val BOLD_SUFFIX = ".bold"
   val ITALIC_SUFFIX = ".italic"
   val STRIKETHROUGH_SUFFIX = ".strikethrough"
   val UNDERLINE_SUFFIX = ".underline"
 
-  val ALL_SUFFIXES = List(COLOUR_SUFFIX, BOLD_SUFFIX, ITALIC_SUFFIX, STRIKETHROUGH_SUFFIX, UNDERLINE_SUFFIX)
+  val ALL_SUFFIXES = List(ENABLED_SUFFIX, COLOUR_SUFFIX, BOLD_SUFFIX, ITALIC_SUFFIX, STRIKETHROUGH_SUFFIX, UNDERLINE_SUFFIX)
 
   val ALL_KEYS = (for {
     syntaxClass <- ALL_SYNTAX_CLASSES
