@@ -321,7 +321,7 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
         overlayStore.setValue(syntaxClass.strikethroughKey, strikethroughCheckBox.getSelection)
     }
 
-    treeViewer.setSelection(new StructuredSelection(scalaCategory))
+    treeViewer.setSelection(new StructuredSelection(scalaSyntacticCategory))
 
     outerComposite.layout(false)
     outerComposite
@@ -368,7 +368,8 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
 object SyntaxColouringPreferencePage {
 
   private val previewText = """/** Scaladoc */
-class ClassName {
+class ClassName extends SomeTrait {
+  object Obj
   val n = 42
   var m = 24
   def method(param: String): Int = {
@@ -391,12 +392,15 @@ class ClassName {
   private val semanticLocations: List[ColouringLocation] = {
 
     val identifierToSyntaxClass = Map(
+      "ClassName" -> CLASS,
+      "SomeTrait" -> TRAIT,
       "method" -> METHOD,
-      "param" -> METHOD_PARAM,
+      "param" -> PARAM,
       "s" -> LOCAL_VAL,
       "xml" -> LOCAL_VAR,
       "n" -> TEMPLATE_VAL,
-      "m" -> TEMPLATE_VAR)
+      "m" -> TEMPLATE_VAR,
+      "Obj" -> OBJECT)
 
     val identifierLocations: Map[String, (Int, Int)] = {
       for (token <- ScalaLexer.rawTokenise(previewText, forgiveErrors = true) if token.tokenType.isId)

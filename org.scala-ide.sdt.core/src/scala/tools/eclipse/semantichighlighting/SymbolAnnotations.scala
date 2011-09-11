@@ -19,12 +19,18 @@ object SymbolAnnotations {
 
   import SymbolTypes._
   val allSymbolAnnotations: Map[SymbolType, AnnotationInfo] = Map(
+    Class -> ClassAnnotation,
     LocalVal -> LocalValAnnotation,
     LocalVar -> LocalVarAnnotation,
+    Method -> MethodAnnotation,
+    Param -> ParamAnnotation,
+    Object -> ObjectAnnotation,
+    Package -> PackageAnnotation,
     TemplateVar -> TemplateVarAnnotation,
     TemplateVal -> TemplateValAnnotation,
-    Method -> MethodAnnotation,
-    MethodParam -> MethodParamAnnotation)
+    Trait -> TraitAnnotation,
+    Type -> TypeAnnotation,
+    TypeParameter -> TypeParamAnnotation)
 }
 
 abstract class AnnotationInfo(name: String, val syntaxClass: ScalaSyntaxClass) {
@@ -42,9 +48,15 @@ abstract class AnnotationInfo(name: String, val syntaxClass: ScalaSyntaxClass) {
 
 }
 
+object ClassAnnotation extends AnnotationInfo("class", ScalaSyntaxClasses.CLASS)
 object LocalValAnnotation extends AnnotationInfo("localVal", ScalaSyntaxClasses.LOCAL_VAL)
 object LocalVarAnnotation extends AnnotationInfo("localVar", ScalaSyntaxClasses.LOCAL_VAR)
+object MethodAnnotation extends AnnotationInfo("method", ScalaSyntaxClasses.METHOD)
+object ParamAnnotation extends AnnotationInfo("methodParam", ScalaSyntaxClasses.PARAM)
+object ObjectAnnotation extends AnnotationInfo("object", ScalaSyntaxClasses.OBJECT)
+object PackageAnnotation extends AnnotationInfo("package", ScalaSyntaxClasses.PACKAGE)
 object TemplateValAnnotation extends AnnotationInfo("templateVal", ScalaSyntaxClasses.TEMPLATE_VAL)
 object TemplateVarAnnotation extends AnnotationInfo("templateVar", ScalaSyntaxClasses.TEMPLATE_VAR)
-object MethodAnnotation extends AnnotationInfo("method", ScalaSyntaxClasses.METHOD)
-object MethodParamAnnotation extends AnnotationInfo("methodParam", ScalaSyntaxClasses.METHOD_PARAM)
+object TraitAnnotation extends AnnotationInfo("trait", ScalaSyntaxClasses.TRAIT)
+object TypeAnnotation extends AnnotationInfo("type", ScalaSyntaxClasses.TYPE)
+object TypeParamAnnotation extends AnnotationInfo("typeParam", ScalaSyntaxClasses.TYPE_PARAMETER)

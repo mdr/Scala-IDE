@@ -54,13 +54,19 @@ class ColourPreferenceInitializer extends AbstractPreferenceInitializer {
     setDefaultsForSyntaxClass(XML_PI, new RGB(0, 128, 128))
     setDefaultsForSyntaxClass(XML_CDATA_BORDER, new RGB(0, 128, 128))
 
+    setDefaultsForSyntaxClass(CLASS, Colors.rgb(255, 215, 0).getRGB)
     setDefaultsForSyntaxClass(LOCAL_VAL, Colors.ocean.getRGB)
     setDefaultsForSyntaxClass(LOCAL_VAR, Colors.cayenne.getRGB)
+    setDefaultsForSyntaxClass(METHOD, Colors.iron.getRGB)
+    setDefaultsForSyntaxClass(PARAM, Colors.eggplant.getRGB)
     setDefaultsForSyntaxClass(TEMPLATE_VAL, Colors.rgb(0, 0, 192).getRGB)
     setDefaultsForSyntaxClass(TEMPLATE_VAR, Colors.salmon.getRGB)
-    setDefaultsForSyntaxClass(METHOD, Colors.iron.getRGB)
-    setDefaultsForSyntaxClass(METHOD_PARAM, Colors.eggplant.getRGB)
-
+    setDefaultsForSyntaxClass(TRAIT, Colors.rgb(148, 0, 211).getRGB)
+    setDefaultsForSyntaxClass(OBJECT, Colors.mocha.getRGB, bold = true)
+    setDefaultsForSyntaxClass(PACKAGE, Colors.rgb(40, 40, 40).getRGB)
+    setDefaultsForSyntaxClass(TYPE, Colors.rgb(42, 108, 35).getRGB)
+    setDefaultsForSyntaxClass(TYPE_PARAMETER, Colors.rgb(35, 42, 108).getRGB)
+    
     javaPrefStore.setDefault(SymbolAnnotations.TEXT_PREFERENCE_KEY, true)
 
     for (annotationInfo <- SymbolAnnotations.allSymbolAnnotations.values)

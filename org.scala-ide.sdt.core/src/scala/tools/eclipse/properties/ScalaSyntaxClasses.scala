@@ -30,13 +30,21 @@ object ScalaSyntaxClasses {
   val TEMPLATE_VAL = ScalaSyntaxClass("Template val", "syntaxColouring.semantic.templateVal", canBeDisabled = true)
   val TEMPLATE_VAR = ScalaSyntaxClass("Template var", "syntaxColouring.semantic.templateVar", canBeDisabled = true)
   val METHOD = ScalaSyntaxClass("Method", "syntaxColouring.semantic.method", canBeDisabled = true)
-  val METHOD_PARAM = ScalaSyntaxClass("Method parameter", "syntaxColouring.semantic.methodParam", canBeDisabled = true)
+  val PARAM = ScalaSyntaxClass("Method parameter", "syntaxColouring.semantic.methodParam", canBeDisabled = true)
+  val OBJECT = ScalaSyntaxClass("Object", "syntaxColouring.semantic.object", canBeDisabled = true)
+  val PACKAGE = ScalaSyntaxClass("Package", "syntaxColouring.semantic.package", canBeDisabled = true)
+  val CLASS = ScalaSyntaxClass("Class", "syntaxColouring.semantic.class", canBeDisabled = true)
+  val TRAIT = ScalaSyntaxClass("Trait", "syntaxColouring.semantic.trait", canBeDisabled = true)
+  val TYPE = ScalaSyntaxClass("Type", "syntaxColouring.semantic.type", canBeDisabled = true)
+  val TYPE_PARAMETER = ScalaSyntaxClass("Type parameter", "syntaxColouring.semantic.typeParameter", canBeDisabled = true)
 
   case class Category(name: String, children: List[ScalaSyntaxClass])
 
-  val scalaCategory = Category("Scala", List(
-    BRACKET, KEYWORD, LOCAL_VAL, LOCAL_VAR, RETURN, METHOD, METHOD_PARAM, MULTI_LINE_STRING, OPERATOR,
-    TEMPLATE_VAL, TEMPLATE_VAR, DEFAULT, STRING))
+  val scalaSyntacticCategory = Category("Scala (syntactic)", List(
+    BRACKET, CLASS, KEYWORD, RETURN, MULTI_LINE_STRING, OPERATOR, DEFAULT, STRING))
+
+  val scalaSemanticCategory = Category("Scala (semantic)", List(
+    LOCAL_VAL, LOCAL_VAR, METHOD, PARAM, OBJECT, PACKAGE, TEMPLATE_VAL, TEMPLATE_VAR, TRAIT, TYPE, TYPE_PARAMETER))
 
   val commentsCategory = Category("Comments", List(
     SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, SCALADOC))
@@ -44,7 +52,7 @@ object ScalaSyntaxClasses {
   val xmlCategory = Category("XML", List(
     XML_ATTRIBUTE_NAME, XML_ATTRIBUTE_VALUE, XML_ATTRIBUTE_EQUALS, XML_CDATA_BORDER, XML_COMMENT, XML_TAG_DELIMITER, XML_TAG_NAME, XML_PI))
 
-  val categories = List(scalaCategory, commentsCategory, xmlCategory)
+  val categories = List(scalaSyntacticCategory, scalaSemanticCategory, commentsCategory, xmlCategory)
 
   val ALL_SYNTAX_CLASSES = categories.flatMap(_.children)
 
