@@ -27,22 +27,70 @@ object ScalaSyntaxClasses {
   val XML_PI = ScalaSyntaxClass("Processing instructions", "syntaxColouring.xml.processingInstruction")
   val XML_CDATA_BORDER = ScalaSyntaxClass("CDATA delimiters", "syntaxColouring.xml.cdata")
 
-  val ALL_SYNTAX_CLASSES = List(SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, SCALADOC, OPERATOR, KEYWORD, RETURN,
-    STRING, MULTI_LINE_STRING, BRACKET, DEFAULT, XML_ATTRIBUTE_NAME, XML_ATTRIBUTE_VALUE, XML_ATTRIBUTE_EQUALS,
-    XML_CDATA_BORDER, XML_COMMENT, XML_TAG_DELIMITER, XML_TAG_NAME, XML_PI)
+  val ANNOTATION = ScalaSyntaxClass("Annotation", "syntaxColouring.semantic.annotation", canBeDisabled = true)
+  val CASE_CLASS = ScalaSyntaxClass("Case class", "syntaxColouring.semantic.caseClass", canBeDisabled = true)
+  val CASE_OBJECT = ScalaSyntaxClass("Case object", "syntaxColouring.semantic.caseObject", canBeDisabled = true)
+  val CLASS = ScalaSyntaxClass("Class", "syntaxColouring.semantic.class", canBeDisabled = true)
+  val LAZY_LOCAL_VAL = ScalaSyntaxClass("Lazy local val", "syntaxColouring.semantic.lazyLocalVal", canBeDisabled = true)
+  val LAZY_TEMPLATE_VAL = ScalaSyntaxClass("Lazy template val", "syntaxColouring.semantic.lazyTemplateVal", canBeDisabled = true)
+  val LOCAL_VAL = ScalaSyntaxClass("Local val", "syntaxColouring.semantic.localVal", canBeDisabled = true)
+  val LOCAL_VAR = ScalaSyntaxClass("Local var", "syntaxColouring.semantic.localVar", canBeDisabled = true)
+  val METHOD = ScalaSyntaxClass("Method", "syntaxColouring.semantic.method", canBeDisabled = true)
+  val OBJECT = ScalaSyntaxClass("Object", "syntaxColouring.semantic.object", canBeDisabled = true)
+  val PACKAGE = ScalaSyntaxClass("Package", "syntaxColouring.semantic.package", canBeDisabled = true)
+  val PARAM = ScalaSyntaxClass("Method parameter", "syntaxColouring.semantic.methodParam", canBeDisabled = true)
+  val TEMPLATE_VAL = ScalaSyntaxClass("Template val", "syntaxColouring.semantic.templateVal", canBeDisabled = true)
+  val TEMPLATE_VAR = ScalaSyntaxClass("Template var", "syntaxColouring.semantic.templateVar", canBeDisabled = true)
+  val TRAIT = ScalaSyntaxClass("Trait", "syntaxColouring.semantic.trait", canBeDisabled = true)
+  val TYPE = ScalaSyntaxClass("Type", "syntaxColouring.semantic.type", canBeDisabled = true)
+  val TYPE_PARAMETER = ScalaSyntaxClass("Type parameter", "syntaxColouring.semantic.typeParameter", canBeDisabled = true)
 
-  val COLOUR_SUFFIX = ".colour"
+  case class Category(name: String, children: List[ScalaSyntaxClass])
+
+  val scalaSyntacticCategory = Category("Scala (syntactic)", List(
+    BRACKET, KEYWORD, RETURN, MULTI_LINE_STRING, OPERATOR, DEFAULT, STRING))
+
+  val scalaSemanticCategory = Category("Scala (semantic)", List(
+    ANNOTATION, CASE_CLASS, CASE_OBJECT, CLASS, LAZY_LOCAL_VAL, LAZY_TEMPLATE_VAL,
+    LOCAL_VAL, LOCAL_VAR, METHOD, PARAM, OBJECT, PACKAGE, TEMPLATE_VAL, TEMPLATE_VAR,
+    TRAIT, TYPE, TYPE_PARAMETER))
+
+  val commentsCategory = Category("Comments", List(
+    SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, SCALADOC))
+
+  val xmlCategory = Category("XML", List(
+    XML_ATTRIBUTE_NAME, XML_ATTRIBUTE_VALUE, XML_ATTRIBUTE_EQUALS, XML_CDATA_BORDER, XML_COMMENT, XML_TAG_DELIMITER, XML_TAG_NAME, XML_PI))
+
+  val categories = List(scalaSyntacticCategory, scalaSemanticCategory, commentsCategory, xmlCategory)
+
+  val ALL_SYNTAX_CLASSES = categories.flatMap(_.children)
+
+  val ENABLED_SUFFIX = ".enabled"
+  val FOREGROUND_COLOUR_SUFFIX = ".colour"
+  val BACKGROUND_COLOUR_SUFFIX = ".backgroundColour"
+  val BACKGROUND_COLOUR_ENABLED_SUFFIX = ".backgroundColourEnabled"
   val BOLD_SUFFIX = ".bold"
   val ITALIC_SUFFIX = ".italic"
-  val STRIKETHROUGH_SUFFIX = ".strikethrough"
   val UNDERLINE_SUFFIX = ".underline"
+
+  val ALL_SUFFIXES = List(ENABLED_SUFFIX, FOREGROUND_COLOUR_SUFFIX, BACKGROUND_COLOUR_SUFFIX, BACKGROUND_COLOUR_ENABLED_SUFFIX,
+    BOLD_SUFFIX, ITALIC_SUFFIX, UNDERLINE_SUFFIX)
+
+  val ALL_KEYS = (for {
+    syntaxClass <- ALL_SYNTAX_CLASSES
+    suffix <- ALL_SUFFIXES
+  } yield syntaxClass.baseName + suffix).toSet
+
+  val USE_ACCURATE_SEMANTIC_HIGHLIGHTING = "syntaxColouring.semantic.useAccurate"
+
+  val STRIKETHROUGH_DEPRECATED = "syntaxColouring.semantic.strikeDeprecated"
 
 }
 
 object ScalariformToSyntaxClass {
 
   // TODO: Distinguish inside from outside of CDATA; distinguish XML tag and attribute name
-  
+
   def apply(token: Token): ScalaSyntaxClass = token.tokenType match {
     case LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET => ScalaSyntaxClasses.BRACKET
     case STRING_LITERAL => ScalaSyntaxClasses.STRING

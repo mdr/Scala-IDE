@@ -1,14 +1,15 @@
 package scala.tools.eclipse.properties
 
-import scala.tools.eclipse.ScalaPreviewerFactory
 import java.util.HashMap
+import org.eclipse.jdt.internal.ui.javaeditor.JavaSourceViewer
 import org.eclipse.jdt.internal.ui.preferences.OverlayPreferenceStore
-import PartialFunction.condOpt
-import org.eclipse.jface.viewers.{ IDoubleClickListener, DoubleClickEvent }
-import scala.tools.eclipse.properties.ScalaSyntaxClasses._
-import org.eclipse.jface.layout.PixelConverter
 import org.eclipse.jdt.internal.ui.preferences.PreferencesMessages
 import scala.tools.eclipse.ScalaPlugin
+import org.eclipse.jdt.internal.ui.preferences.ScrolledPageContent
+import org.eclipse.jdt.ui.PreferenceConstants
+import org.eclipse.jdt.ui.text.IColorManager
+import org.eclipse.jdt.ui.text.IJavaPartitions
+import org.eclipse.jface.layout.PixelConverter
 import org.eclipse.jface.preference.ColorSelector
 import org.eclipse.jface.preference.IPreferenceStore
 import org.eclipse.jface.preference.PreferenceConverter
@@ -17,13 +18,9 @@ import org.eclipse.jface.resource.JFaceResources
 import org.eclipse.jface.text.Document
 import org.eclipse.jface.text.IDocumentPartitioner
 import org.eclipse.jface.text.TextUtilities
-import org.eclipse.jface.viewers.ISelectionChangedListener
-import org.eclipse.jface.viewers.IStructuredSelection
-import org.eclipse.jface.viewers.LabelProvider
-import org.eclipse.jface.viewers.SelectionChangedEvent
-import org.eclipse.jface.viewers.StructuredSelection
-import org.eclipse.jface.viewers.Viewer
-import org.eclipse.jface.viewers.TreeViewer
+import org.eclipse.jface.util.IPropertyChangeListener
+import org.eclipse.jface.util.PropertyChangeEvent
+import org.eclipse.jface.viewers._
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
@@ -43,16 +40,20 @@ import org.eclipse.ui.IWorkbenchPreferencePage
 import org.eclipse.ui.dialogs.PreferencesUtil
 import org.eclipse.ui.editors.text.EditorsUI
 import org.eclipse.ui.texteditor.ChainedPreferenceStore
-import org.eclipse.jdt.internal.ui.preferences.ScrolledPageContent
-import org.eclipse.jface.viewers.ITreeContentProvider
-import org.eclipse.jdt.internal.ui.javaeditor.JavaSourceViewer
-import org.eclipse.jdt.ui.PreferenceConstants
-import scala.tools.eclipse.lexical.ScalaDocumentPartitioner
+import scala.PartialFunction.condOpt
+import scala.tools.eclipse.ScalaPlugin
+import scala.tools.eclipse.ScalaPreviewerFactory
 import scala.tools.eclipse.ScalaSourceViewerConfiguration
-import org.eclipse.jdt.ui.text.IJavaPartitions
-import org.eclipse.jface.util.IPropertyChangeListener
-import org.eclipse.jface.util.PropertyChangeEvent
+import scala.tools.eclipse.lexical.ScalaDocumentPartitioner
+import scala.tools.eclipse.properties.ScalaSyntaxClasses._
+import scala.tools.eclipse.util.EclipseUtils._
 import scala.tools.eclipse.util.SWTUtils._
+import scalariform.lexer.ScalaLexer
+import scalariform.lexer.Token
+import org.eclipse.jface.text.source.SourceViewer
+import org.eclipse.jdt.internal.ui.JavaPlugin
+import org.eclipse.swt.custom.StyleRange
+import org.eclipse.jdt.internal.ui.preferences.OverlayPreferenceStore.OverlayKey
 
 /**
  * @see org.eclipse.jdt.internal.ui.preferences.JavaEditorColoringConfigurationBlock
@@ -63,13 +64,19 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
   setPreferenceStore(ScalaPlugin.plugin.getPreferenceStore)
   private val overlayStore = makeOverlayPreferenceStore
 
-  private var colorEditorLabel: Label = _
+  private var extraAccuracyCheckBox: Button = _
+  private var strikethroughDeprecatedCheckBox: Button = _
+  private var foregroundColorEditorLabel: Label = _
   private var syntaxForegroundColorEditor: ColorSelector = _
+  private var backgroundColorEditorLabel: Label = _
+  private var syntaxBackgroundColorEditor: ColorSelector = _
+  private var enabledCheckBox: Button = _
+  private var backgroundColorEnabledCheckBox: Button = _
   private var boldCheckBox: Button = _
   private var italicCheckBox: Button = _
   private var underlineCheckBox: Button = _
-  private var strikethroughCheckBox: Button = _
   private var treeViewer: TreeViewer = _
+  private var previewer: SourceViewer = _
 
   def init(workbench: IWorkbench) {}
 
@@ -89,17 +96,24 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     scrolled
   }
 
+  import OverlayPreferenceStore._
+  private def makeOverlayKeys(syntaxClass: ScalaSyntaxClass): List[OverlayKey] = {
+    List(
+      new OverlayKey(BOOLEAN, syntaxClass.enabledKey),
+      new OverlayKey(STRING, syntaxClass.foregroundColourKey),
+      new OverlayKey(STRING, syntaxClass.backgroundColourKey),
+      new OverlayKey(BOOLEAN, syntaxClass.backgroundColourEnabledKey),
+      new OverlayKey(BOOLEAN, syntaxClass.boldKey),
+      new OverlayKey(BOOLEAN, syntaxClass.italicKey),
+      new OverlayKey(BOOLEAN, syntaxClass.underlineKey))
+  }
+
   def makeOverlayPreferenceStore = {
-    import OverlayPreferenceStore._
-    val keys = ALL_SYNTAX_CLASSES.flatMap { syntaxClass =>
-      List(
-        new OverlayKey(STRING, syntaxClass.colourKey),
-        new OverlayKey(BOOLEAN, syntaxClass.boldKey),
-        new OverlayKey(BOOLEAN, syntaxClass.italicKey),
-        new OverlayKey(BOOLEAN, syntaxClass.strikethroughKey),
-        new OverlayKey(BOOLEAN, syntaxClass.underlineKey))
-    }.toArray
-    new OverlayPreferenceStore(getPreferenceStore, keys)
+    val keys =
+      new OverlayKey(BOOLEAN, USE_ACCURATE_SEMANTIC_HIGHLIGHTING) ::
+        new OverlayKey(BOOLEAN, STRIKETHROUGH_DEPRECATED) ::
+        ALL_SYNTAX_CLASSES.flatMap(makeOverlayKeys)
+    new OverlayPreferenceStore(getPreferenceStore, keys.toArray)
   }
 
   override def performOk() = {
@@ -118,20 +132,11 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     super.performDefaults()
     overlayStore.loadDefaults()
     handleSyntaxColorListSelection()
+    extraAccuracyCheckBox.setSelection(overlayStore getBoolean USE_ACCURATE_SEMANTIC_HIGHLIGHTING)
+    strikethroughDeprecatedCheckBox.setSelection(overlayStore getBoolean STRIKETHROUGH_DEPRECATED)
   }
 
   object TreeContentAndLabelProvider extends LabelProvider with ITreeContentProvider {
-
-    case class Category(name: String, children: List[ScalaSyntaxClass])
-
-    val scalaCategory = Category("Scala", List(BRACKET, KEYWORD, RETURN, MULTI_LINE_STRING, OPERATOR, DEFAULT, STRING))
-
-    val commentsCategory = Category("Comments", List(SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, SCALADOC))
-
-    val xmlCategory = Category("XML", List(XML_ATTRIBUTE_EQUALS, XML_ATTRIBUTE_NAME, XML_ATTRIBUTE_VALUE,
-      XML_CDATA_BORDER, XML_COMMENT, XML_TAG_DELIMITER, XML_TAG_NAME, XML_PI))
-
-    val categories = List(scalaCategory, commentsCategory, xmlCategory)
 
     def getElements(inputElement: AnyRef) = categories.toArray
 
@@ -140,14 +145,7 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
       case _ => Array()
     }
 
-    def getParent(element: AnyRef): Category = {
-      for {
-        category <- categories
-        child <- category.children
-        if (child == element)
-      } return category
-      null
-    }
+    def getParent(element: AnyRef): Category = categories.find(_.children contains element).orNull
 
     def hasChildren(element: AnyRef) = getChildren(element).nonEmpty
 
@@ -155,7 +153,7 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
 
     override def getText(element: AnyRef) = element match {
       case Category(name, _) => name
-      case ScalaSyntaxClass(displayName, _) => displayName
+      case ScalaSyntaxClass(displayName, _, _) => displayName
     }
   }
 
@@ -175,7 +173,7 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
       grabExcessHorizontalSpace = false,
       grabExcessVerticalSpace = true,
       widthHint = widthHint,
-      heightHint = convertHeightInCharsToPixels(9)))
+      heightHint = convertHeightInCharsToPixels(11)))
 
     treeViewer.addDoubleClickListener { event: DoubleClickEvent =>
       val element = event.getSelection.asInstanceOf[IStructuredSelection].getFirstElement
@@ -243,7 +241,17 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
       horizontalSpan = 1,
       heightHint = new PixelConverter(outerComposite).convertHeightInCharsToPixels(1) / 2))
 
-    var elementLabel = new Label(outerComposite, SWT.LEFT)
+    extraAccuracyCheckBox = new Button(outerComposite, SWT.CHECK)
+    extraAccuracyCheckBox.setText("Use slower but more accurate semantic highlighting")
+    extraAccuracyCheckBox.setLayoutData(new GridData(GridData.FILL_HORIZONTAL))
+    extraAccuracyCheckBox.setSelection(overlayStore.getBoolean(USE_ACCURATE_SEMANTIC_HIGHLIGHTING))
+
+    strikethroughDeprecatedCheckBox = new Button(outerComposite, SWT.CHECK)
+    strikethroughDeprecatedCheckBox.setText("Strikethrough deprecated symbols")
+    strikethroughDeprecatedCheckBox.setLayoutData(new GridData(GridData.FILL_HORIZONTAL))
+    strikethroughDeprecatedCheckBox.setSelection(overlayStore.getBoolean(STRIKETHROUGH_DEPRECATED))
+
+    val elementLabel = new Label(outerComposite, SWT.LEFT)
     elementLabel.setText(PreferencesMessages.JavaEditorPreferencePage_coloring_element)
     elementLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL))
 
@@ -259,14 +267,34 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     stylesComposite.setLayout(gridLayout(marginHeight = 0, marginWidth = 0, numColumns = 2))
     stylesComposite.setLayoutData(new GridData(GridData.FILL_BOTH))
 
-    colorEditorLabel = new Label(stylesComposite, SWT.LEFT)
-    colorEditorLabel.setText(PreferencesMessages.JavaEditorPreferencePage_color)
+    enabledCheckBox = new Button(stylesComposite, SWT.CHECK)
+    enabledCheckBox.setText(PreferencesMessages.JavaEditorPreferencePage_enable)
+    enabledCheckBox.setLayoutData(gridData(
+      horizontalAlignment = GridData.BEGINNING, horizontalIndent = 0, horizontalSpan = 2))
 
-    colorEditorLabel.setLayoutData(gridData(horizontalAlignment = GridData.BEGINNING, horizontalIndent = 20))
+    foregroundColorEditorLabel = new Label(stylesComposite, SWT.LEFT)
+    foregroundColorEditorLabel.setText("Foreground:")
+
+    foregroundColorEditorLabel.setLayoutData(gridData(horizontalAlignment = GridData.BEGINNING, horizontalIndent = 20))
 
     syntaxForegroundColorEditor = new ColorSelector(stylesComposite)
     val foregroundColorButton = syntaxForegroundColorEditor.getButton
     foregroundColorButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING))
+
+    backgroundColorEditorLabel = new Label(stylesComposite, SWT.LEFT)
+    backgroundColorEditorLabel.setText("Background:")
+
+    backgroundColorEditorLabel.setLayoutData(gridData(horizontalAlignment = GridData.BEGINNING, horizontalIndent = 20))
+
+    syntaxBackgroundColorEditor = new ColorSelector(stylesComposite)
+    val backgroundColorButton = syntaxBackgroundColorEditor.getButton
+    backgroundColorButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING))
+
+    backgroundColorEnabledCheckBox = new Button(stylesComposite, SWT.CHECK)
+    backgroundColorEnabledCheckBox.setText("Paint background")
+
+    backgroundColorEnabledCheckBox.setLayoutData(gridData(
+      horizontalAlignment = GridData.BEGINNING, horizontalIndent = 20, horizontalSpan = 2))
 
     boldCheckBox = new Button(stylesComposite, SWT.CHECK)
     boldCheckBox.setText(PreferencesMessages.JavaEditorPreferencePage_bold)
@@ -279,11 +307,6 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     italicCheckBox.setLayoutData(gridData(
       horizontalAlignment = GridData.BEGINNING, horizontalIndent = 20, horizontalSpan = 2))
 
-    strikethroughCheckBox = new Button(stylesComposite, SWT.CHECK)
-    strikethroughCheckBox.setText(PreferencesMessages.JavaEditorPreferencePage_strikethrough)
-    strikethroughCheckBox.setLayoutData(gridData(
-      horizontalAlignment = GridData.BEGINNING, horizontalIndent = 20, horizontalSpan = 2))
-
     underlineCheckBox = new Button(stylesComposite, SWT.CHECK)
     underlineCheckBox.setText(PreferencesMessages.JavaEditorPreferencePage_underline)
     underlineCheckBox.setLayoutData(
@@ -293,18 +316,42 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
     previewLabel.setText(PreferencesMessages.JavaEditorPreferencePage_preview)
     previewLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL))
 
-    val previewer = createPreviewer(outerComposite)
-    previewer.setLayoutData(gridData(
+    previewer = createPreviewer(outerComposite)
+    val previewerControl = previewer.getControl
+    previewerControl.setLayoutData(gridData(
       horizontalAlignment = GridData.FILL,
       verticalAlignment = GridData.FILL,
       grabExcessHorizontalSpace = true,
       grabExcessVerticalSpace = true,
       widthHint = convertWidthInCharsToPixels(20),
-      heightHint = convertHeightInCharsToPixels(5)))
-
+      heightHint = convertHeightInCharsToPixels(12)))
+    updatePreviewerColours()
+    overlayStore.addPropertyChangeListener { event: PropertyChangeEvent =>
+      updatePreviewerColours()
+    }
+    extraAccuracyCheckBox.addSelectionListener {
+      overlayStore.setValue(USE_ACCURATE_SEMANTIC_HIGHLIGHTING, extraAccuracyCheckBox.getSelection)
+    }
+    strikethroughDeprecatedCheckBox.addSelectionListener {
+      overlayStore.setValue(STRIKETHROUGH_DEPRECATED, strikethroughDeprecatedCheckBox.getSelection)
+    }
+    enabledCheckBox.addSelectionListener {
+      for (syntaxClass <- selectedSyntaxClass)
+        overlayStore.setValue(syntaxClass.enabledKey, enabledCheckBox.getSelection)
+    }
     foregroundColorButton.addSelectionListener {
       for (syntaxClass <- selectedSyntaxClass)
-        PreferenceConverter.setValue(overlayStore, syntaxClass.colourKey, syntaxForegroundColorEditor.getColorValue)
+        PreferenceConverter.setValue(overlayStore, syntaxClass.foregroundColourKey, syntaxForegroundColorEditor.getColorValue)
+    }
+    backgroundColorButton.addSelectionListener {
+      for (syntaxClass <- selectedSyntaxClass)
+        PreferenceConverter.setValue(overlayStore, syntaxClass.backgroundColourKey, syntaxBackgroundColorEditor.getColorValue)
+    }
+    backgroundColorEnabledCheckBox.addSelectionListener {
+      for (syntaxClass <- selectedSyntaxClass) {
+        overlayStore.setValue(syntaxClass.backgroundColourEnabledKey, backgroundColorEnabledCheckBox.getSelection)
+        backgroundColorButton.setEnabled(backgroundColorEnabledCheckBox.getSelection)
+      }
     }
     boldCheckBox.addSelectionListener {
       for (syntaxClass <- selectedSyntaxClass)
@@ -318,53 +365,75 @@ class SyntaxColouringPreferencePage extends PreferencePage with IWorkbenchPrefer
       for (syntaxClass <- selectedSyntaxClass)
         overlayStore.setValue(syntaxClass.underlineKey, underlineCheckBox.getSelection)
     }
-    strikethroughCheckBox.addSelectionListener {
-      for (syntaxClass <- selectedSyntaxClass)
-        overlayStore.setValue(syntaxClass.strikethroughKey, strikethroughCheckBox.getSelection)
-    }
 
-    treeViewer.setSelection(new StructuredSelection(TreeContentAndLabelProvider.scalaCategory))
+    treeViewer.setSelection(new StructuredSelection(scalaSyntacticCategory))
 
     outerComposite.layout(false)
     outerComposite
   }
 
-  private def createPreviewer(parent: Composite): Control =
-    ScalaPreviewerFactory.createPreviewer(parent, overlayStore, previewText).getControl
+  private def createPreviewer(parent: Composite): SourceViewer =
+    ScalaPreviewerFactory.createPreviewer(parent, overlayStore, previewText)
 
-  private def selectedSyntaxClass: Option[ScalaSyntaxClass] =
-    condOpt(treeViewer.getSelection.asInstanceOf[IStructuredSelection].getFirstElement) {
-      case syntaxClass: ScalaSyntaxClass => syntaxClass
-    }
+  private def selectedSyntaxClass: Option[ScalaSyntaxClass] = condOpt(treeViewer.getSelection) {
+    case SelectedItems(syntaxClass: ScalaSyntaxClass) => syntaxClass
+  }
 
   private def massSetEnablement(enabled: Boolean) =
-    List(syntaxForegroundColorEditor.getButton, colorEditorLabel, boldCheckBox, italicCheckBox,
-      strikethroughCheckBox, underlineCheckBox) foreach { _.setEnabled(enabled) }
+    List(enabledCheckBox, syntaxForegroundColorEditor.getButton, foregroundColorEditorLabel,
+      syntaxBackgroundColorEditor.getButton, backgroundColorEditorLabel, backgroundColorEnabledCheckBox, boldCheckBox, italicCheckBox,
+      underlineCheckBox) foreach { _.setEnabled(enabled) }
 
   private def handleSyntaxColorListSelection() = selectedSyntaxClass match {
     case None =>
       massSetEnablement(false)
     case Some(syntaxClass) =>
-      val rgb = PreferenceConverter.getColor(overlayStore, syntaxClass.colourKey)
-      syntaxForegroundColorEditor.setColorValue(rgb)
-      boldCheckBox.setSelection(overlayStore.getBoolean(syntaxClass.boldKey))
-      italicCheckBox.setSelection(overlayStore.getBoolean(syntaxClass.italicKey))
-      strikethroughCheckBox.setSelection(overlayStore.getBoolean(syntaxClass.strikethroughKey))
-      underlineCheckBox.setSelection(overlayStore.getBoolean(syntaxClass.underlineKey))
+      import syntaxClass._
+      syntaxForegroundColorEditor.setColorValue(overlayStore getColor foregroundColourKey)
+      syntaxBackgroundColorEditor.setColorValue(overlayStore getColor backgroundColourKey)
+      val backgroundColorEnabled = overlayStore getBoolean backgroundColourEnabledKey
+      backgroundColorEnabledCheckBox.setSelection(backgroundColorEnabled)
+      enabledCheckBox.setSelection(overlayStore getBoolean enabledKey)
+      boldCheckBox.setSelection(overlayStore getBoolean boldKey)
+      italicCheckBox.setSelection(overlayStore getBoolean italicKey)
+      underlineCheckBox.setSelection(overlayStore getBoolean underlineKey)
+
       massSetEnablement(true)
+      enabledCheckBox.setEnabled(canBeDisabled)
+      syntaxBackgroundColorEditor.getButton.setEnabled(backgroundColorEnabled)
+  }
+
+  private def updatePreviewerColours() {
+    val textWidget = previewer.getTextWidget
+    for (ColouringLocation(syntaxClass, offset, length) <- semanticLocations) {
+      val styleRange = syntaxClass.getStyleRange(overlayStore)
+      styleRange.start = offset
+      styleRange.length = length
+      textWidget.setStyleRange(styleRange)
+    }
   }
 
 }
 
 object SyntaxColouringPreferencePage {
 
-  val previewText = """/** Scaladoc */
-class ClassName {
-  def method(arg: String): Int = {
+  private val previewText = """package foo.bar.baz
+/** Scaladoc */
+@Annotation
+class Class[T] extends Trait {
+  object Object
+  case object CaseObject
+  case class CaseClass
+  type Type = Int
+  lazy val lazyTemplateVal = 42
+  val templateVal = 42
+  var templateVar = 24
+  def method(param: Int): Int = {
     // Single-line comment
     /* Multi-line comment */
-    val s = "foo" + """ + "\"\"\"" + "multiline string" + "\"\"\"" + """
-    val xml =
+    val lazyLocalVal = 42
+    val localVal = "foo" + """ + "\"\"\"" + "multiline string" + "\"\"\"" + """
+    var localVar =
       <tag attributeName="value">
         <!-- XML comment -->
         <?processinginstruction?>
@@ -375,4 +444,40 @@ class ClassName {
   }
 }"""
 
+  private case class ColouringLocation(syntaxClass: ScalaSyntaxClass, offset: Int, length: Int)
+
+  private val semanticLocations: List[ColouringLocation] = {
+
+    val identifierToSyntaxClass = Map(
+      "foo" -> PACKAGE,
+      "bar" -> PACKAGE,
+      "baz" -> PACKAGE,
+      "Annotation" -> ANNOTATION,
+      "Class" -> CLASS,
+      "CaseClass" -> CASE_CLASS,
+      "CaseObject" -> CASE_OBJECT,
+      "Trait" -> TRAIT,
+      "Int" -> CLASS,
+      "method" -> METHOD,
+      "param" -> PARAM,
+      "lazyLocalVal" -> LAZY_LOCAL_VAL,
+      "localVal" -> LOCAL_VAL,
+      "localVar" -> LOCAL_VAR,
+      "lazyTemplateVal" -> LAZY_TEMPLATE_VAL,
+      "templateVal" -> TEMPLATE_VAL,
+      "templateVar" -> TEMPLATE_VAR,
+      "T" -> TYPE_PARAMETER,
+      "Type" -> TYPE,
+      "Object" -> OBJECT)
+
+    val identifierLocations: Map[String, (Int, Int)] = {
+      for (token <- ScalaLexer.rawTokenise(previewText, forgiveErrors = true) if token.tokenType.isId)
+        yield (token.text, (token.startIndex, token.length))
+    } toMap
+
+    for {
+      (identifier, syntaxClass) <- identifierToSyntaxClass.toList
+      (offset, length) = identifierLocations(identifier)
+    } yield ColouringLocation(syntaxClass, offset, length)
+  }
 }
